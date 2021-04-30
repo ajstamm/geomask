@@ -63,9 +63,19 @@ plotGMcompare <- function(bound, point, maskvars, closemap = FALSE) {
     mylegend <- c("Original areas", "Aggregated areas")
   }
 
-  legend("topleft", legend = mylegend,
-         fill = "White", border = c("red", "black"), cex = 1,
-         bty = "n", inset = 0, y.intersp = 1.25)
+  if (class(point) == "SpatialPolygonsDataFrame") {
+    legend("topleft", legend = mylegend,
+           fill = "White", border = c("red", "black"), cex = 1,
+           bty = "n", inset = 0, y.intersp = 1.25)
+  } else if (class(point) == "SpatialPointsDataFrame") {
+    mylegend2 <- paste("  ", mylegend)
+    legend("topleft", legend = mylegend,
+           fill = "White", border = c("red", "white"), cex = 1,
+           bty = "n", inset = 0, y.intersp = 1.25)
+    legend("topleft", legend = mylegend2,
+           pch = 1, col = c("white", "black"), cex = 1,
+           bty = "n", inset = 0, y.intersp = 1.25)
+  }
 
   # add labels ####
   mytitle <- "Map showing boundaries and points"

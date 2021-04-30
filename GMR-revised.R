@@ -41,20 +41,17 @@
 
 
 #---- libraries ----
+# abby: change function calls to include library
+#       then delete this whole section
+# gwen: load default libraries. Need this to run as batch.
 # until after initial compile
-devtools::load_all("P:/Sections/EHS/Abigail/SubcountyData/Rcode/geomask/R")
+devtools::load_all("P:/Sections/EHS/Staff/ajs11/R/pkg/geomask/R")
 # confirmed required
   #library(tcltk)
   #library(rgdal)
   #library(gatpkg)
   #library(sp)
 
-
-
-# abby: change function calls to include library
-#       then delete this whole section
-# gwen: load default libraries. Need this to run as batch.
-# abby: replace svDialogs and tcltk with tcltk2 (or read from gatpkg)
 
 # requires GAT because I don't feel like being redundant
 # rewrite locateGATshapefile to read that directly, too? yes
@@ -71,28 +68,50 @@ devtools::load_all("P:/Sections/EHS/Abigail/SubcountyData/Rcode/geomask/R")
 #tclRequire("BWidget")
 
 
-
-#---- progress bar ----
+#---- settings ----
 mysettings <- list(version = "1.4.0",
                    # packageDescription("geomask")$Version,
                    pkgdate = "2021-01-05",
                    # packageDescription("geomask")$Date,
                    starttime = Sys.time()) # needed for the log
 
+# pre-load lists
+myshps <- list()
+temp <- list(quit = FALSE, backopt = TRUE)
+step <- 1
+
+# for testing; read in settings file
+# later, set up menu confiurmation like in GAT
+settings <- paste("P:/Sections/EHS/Staff/ajs11/R/tools/geomaskTest/results",
+                  "save_test_settings.Rdata", sep = "/")
+
+if (!is.null(settings)) {
+  load(settings)
+  step <- 6
+  temp$flagconfirm <- TRUE
+  filevars$userout <- paste0(filevars$userout, "_2")
+  filevars$fileout <- paste0(filevars$fileout, "_2")
+  myshps$point <- rgdal::readOGR(dsn = filevars$pointpath,
+                                 layer = filevars$pointfile,
+                                 stringsAsFactors = FALSE)
+  myshps$bound <- rgdal::readOGR(dsn = filevars$boundpath,
+                                 layer = filevars$boundfile,
+                                 stringsAsFactors = FALSE)
+} else {
+  maskvars <- list(min = 100, max = 1000, unit = "meters")
+  filevars <- list(pointin = "", boundin = "")
+}
+
+
+
+
+
+#---- progress bar ----
 pb <- list(title = paste("NYSDOH Geomask Tool",
                          mysettings$version, mysettings$date),
            label = "NYSDOH Geomask Tool is running. Please wait for dialogs.")
 tpb <- tcltk::tkProgressBar(title = pb$title, label = pb$label, min = 0,
                             max = 26, initial = 0, width = 400)
-
-#---- settings ----
-# for testing; set up settings file as with GAT?
-myshps <- list()
-maskvars <- list(min = 100, max = 1000, unit = "meters")
-filevars <- list(pointin = "", boundin = "")
-temp <- list(quit = FALSE, backopt = TRUE)
-step <- 1
-
 
 #---- user input ----
 
@@ -110,6 +129,7 @@ while(step < 7) { # gwen: get user input until finalized
     filevars$pointin <- temppath$userin
     filevars$pointfile <- temppath$filein
     filevars$pointpath <- temppath$pathin
+    rm(temppath)
 
     if (filevars$pointin == "cancel") {
       step <- 10
@@ -162,6 +182,7 @@ while(step < 7) { # gwen: get user input until finalized
     filevars$boundin <- temppath$userin
     filevars$boundfile <- temppath$filein
     filevars$boundpath <- temppath$pathin
+    rm(temppath)
 
     if (filevars$boundin == "cancel") {
       step <- 10
@@ -269,6 +290,7 @@ while(step < 7) { # gwen: get user input until finalized
         maskvars$max <- maskvars$max / 3.2808399
       }
     }
+    rm(templist)
   }
 
   #---- step 4: kml ----
@@ -299,7 +321,8 @@ while(step < 7) { # gwen: get user input until finalized
     # identify the save files' name and location
     pb <- list(title = "NYSDOH GAT: identify save file",
                label = "Identifying the name and location of your save file.")
-    tcltk::setTkProgressBar(tpb, value = step, title = pb$title, label = pb$label)
+    tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
+                            label = pb$label)
 
     saves <- gatpkg::saveGATfiles()
     filevars$userout <- saves$userout
@@ -341,16 +364,18 @@ while(step < 7) { # gwen: get user input until finalized
     }
   }
 } # end while step
-rm(temp, temppath, templist)
+rm(temp)
 
 #---- automatic processing ----
 # at this point, step = 7
 if (!mysettings$quit) {
+  # Abby: need to add progress bar steps
+  #       do this later after full program rewritten
   #---- isolate old points ----
   # for point calculations
   pts <- list(n = nrow(myshps$point))
   # save coordinates
-  pts$coords<-coordinates(myshps$point)
+  pts$coords <- sp::coordinates(myshps$point)
   pts$x <- pts$coords[,1]
   pts$y <- pts$coords[,2]
 
@@ -359,8 +384,10 @@ if (!mysettings$quit) {
   set.seed(mysettings$starttime)
   pts$dist <- runif(pts$n, min = maskvars$min, max = maskvars$max)
   pts$angle <- runif(pts$n, min = 0, max = 2 * pi)
+  pts$min <- rep(maskvars$min, length(pts$x))
+  pts$max <- rep(maskvars$max, length(pts$x))
 
-  # gwen: make sure arguments of sin/cosine are in radians
+  # gwen: make sure arguments of sine/cosine are in radians
   #       approx 111 km per degree latitude
   #       formulas to move points:
   # y: original latitude + sin (r1 * 2 * pi()) * r2 * 500 / 111000
@@ -372,128 +399,164 @@ if (!mysettings$quit) {
 
   #---- check new points ----
 
-  # abby: need to rewrite and/or reorder everything below this point
+  flag <- list(max = FALSE, min = FALSE)
 
-
-  # what are these for?
-  flag <- list(max = TRUE, min = TRUE)
-
-  # get coordinates for polygons, and check if points are inside
-  # add an element to check if point is in correct polygon?
+  # Gwen: get coordinates for polygons, and check if points are inside
+  # Abby: bypassing loops; using i = 1; j = 117 to test
   for (i in 1:length(myshps$bound@polygons)) {
+    # temporary copies ----
     temp <- list()
-    # get polygon values ----
+      # get polygon values ----
     temp$shp <- myshps$bound@polygons[[i]]@Polygons[[1]]  # myp2
     temp$coords <- temp$shp@coords # mypc
     temp$x <- temp$coords[, 1] # mypx
     temp$y <- temp$coords[, 2] # mypy
 
-    # check points in polygons ----
+      # check points in polygons ----
     # 0 = exterior, 1 = interior, 2 & 3 are on edge/vertex
     # formerly checkifin, checkifinnew
     temp$in_old <- sp::point.in.polygon(pts$x, pts$y, temp$x, temp$y)
     temp$in_new <- sp::point.in.polygon(pts$x_new, pts$y_new, temp$x, temp$y)
 
+    # loop through areas ----
     # find what area the point is in
     # correct maximum distances based on the maximum possible
     # in the area if needed
+    # Abby: apparently we are always forcing max distance?
+    #       not truly random, then?
 
     for (j in 1:length(temp$in_old)) { # check each area
       # reset these values to defaults
       trycount <- 0
+      if (temp$in_old[j] > 0) { # if point is in area or on edge/vertex
 
-      if(temp$in_old[j] > 0){ # if point is in area or on edge/vertex
         # reset maximum to maximum possible given boundary restriction
         # units in kilometers, so multiply by 1000 to get meters
         temp$dist <- sp::spDistsN1(temp$coords, myshps$point@coords[j, ],
                                    longlat = TRUE) * 1000
+
         # temp$coords = polygon coordinates
+        # Gwen: keep track of the maximum maximum tried -
+        #       either user entry or farthest point in the boundary polygon
+
+
         # myshps$point@coords = original point coordinates
         # maximum distance is outside farthest point of polygon - unnecessary
-        if (max(temp$dist) < maskvars$max[j]) {
-          maskvars$max[j] <- max(temp$dist)
+        if (max(temp$dist) < maskvars$max) {
+          temp$max <- max(temp$dist)
           flag$max <- TRUE
+        } else {
+          temp$max <- maskvars$max
         }
 
-
-        # what is this? when is it created?
-        # keep track of the maximum maximum tried -
-        # either user entry or farthest point in the boundary polygon
-        recordmax[j] <- maskvars$max[j]
-
-        if(userdistmin[p]>userdistmax[p]/2){userdistmin[p]<-userdistmax[p]/2
-        minchangeflag<-TRUE
+        if (maskvars$min > temp$max / 2) {
+          temp$min <- temp$max / 2
+          flag$min <- TRUE
+        } else {
+          temp$min <- maskvars$min
         }
-        newdis[p]<-runif(1,min=userdistmin[p],max=userdistmax[p])
-        newang[p]<-runif(1,min=0,max=2*pi)
-        mynewy[p]<-myy[p]+sin(newang[p])*newdis[p]/111000  #approx 111 km per degree latitude
-        mynewx[p]<-myx[p]+cos(newang[p])*newdis[p]/(cos(myy[p]*pi/180)*111321)
-        checkifnewin[p]<-point.in.polygon(mynewx[p],mynewy[p],mypx,mypy)
-        if(checkifnewin[p]>1){checkifnewin[p]<-1}
-        trycount<-trycount+1
-      }#end if point is in area
 
-      while(checkifin[p]==1&&checkifnewin[p]==0){#print(paste("moving point",as.character(p)," so it is within boundary"))
-        #if the old point is in an area, but the new point is not, need to fix it
-        trycount<-trycount+1
+        if (flag$min | flag$max) {
+          pts$min[j] <- temp$min
+          pts$max[j] <- temp$max
+          pts$dist[j] <- runif(1, min = temp$min, max = temp$max)
+          pts$angle[j] <- runif(1, min = 0, max = 2 * pi)
+          pts$y_new[j] <- pts$y[j] + sin(pts$angle[j]) * pts$dist[j] / 111000
+          pts$x_new[j] <- pts$x[j] + cos(pts$angle[j]) * pts$dist[j] /
+            (cos(pts$y[j] * pi / 180) * 111321)
 
-        if(trycount/100==floor(trycount/100)){#if try at least 100 times and cannot get a point in the polygon
-          #change the maximum distance
-          userdistmax[p]<-userdistmax[p]-userdistmax[p]*0.1
-          if(userdistmin[p]>userdistmax[p]/2){userdistmin[p]<-userdistmax[p]/2
-          minchangeflag<-TRUE}
-          maxchangeflag<-TRUE} #end changing max distance after 100 tries
+          temp$in_new[j] <- sp::point.in.polygon(pts$x_new[j], pts$y_new[j],
+                                                 temp$x, temp$y)
+        }
 
-        if(trycount/10==floor(trycount/10)){#If try at least 10 times and cannot get a point in the polygon,
-          #change minimum distance
-          userdistmin[p]<-userdistmin[p]-userdistmin[p]*0.1
-          minchangeflag<-TRUE}
+        if (temp$in_new[j] > 1){
+          temp$in_new[j] <- 1
+        }
+        trycount <- trycount + 1
+      } # end if point is in area
 
-        #get new candidate point
-        newdis[p]<-runif(1,min=userdistmin[p],max=userdistmax[p])
-        newang[p]<-runif(1,min=0,max=2*pi)
-        mynewy[p]<-myy[p]+sin(newang[p])*newdis[p]/111000  #approx 111 km per degree latitude
-        mynewx[p]<-myx[p]+cos(newang[p])*newdis[p]/(cos(myy[p]*pi/180)*111321)
-        checkifnewin[p]<-point.in.polygon(mynewx[p],mynewy[p],mypx,mypy)
-        if(checkifnewin[p]>1){checkifnewin[p]<-1}
-      }#for discrepant points
-    }#after cycling through number of points
-  }#cycle through all areas
+      while(temp$in_old[j] == 1 && temp$in_new[j] == 0) {
+        # start first check ----
+        # print(paste("moving point",as.character(p)," so it is within boundary"))
+        # if the old point is in an area, but the new point is not, fix it
+        trycount <- trycount + 1
 
-  ########################################################################
-  #end moving points section.  Next distplay and output results
-  ########################################################################
+        if (trycount / 100 == floor(trycount / 100)) {
+          # if try at least 100 times and cannot get a point in the polygon
+          # change the maximum distance
+          temp$max <- 0.9 * temp$max
+          if (temp$min > temp$max / 2){
+            temp$min <- temp$max / 2
+            flag$min <- TRUE
+          }
+          flag$max <- TRUE
+        } # end changing max distance after 100 tries
+
+        if (trycount / 10 == floor(trycount / 10)) {
+          # If try at least 10 times and cannot get a point in the polygon,
+          # change minimum distance
+          temp$min <- 0.9 * temp$min
+          flag$min <- TRUE
+        }
+
+        # get new candidate point
+        if (flag$min | flag$max) {
+          pts$min[j] <- temp$min
+          pts$max[j] <- temp$max
+          pts$dist[j] <- runif(1, min = temp$min, max = temp$max)
+          pts$angle[j] <- runif(1, min = 0, max = 2 * pi)
+          pts$y_new[j] <- pts$y[j] + sin(pts$angle[j]) * pts$dist[j] / 111000
+          pts$x_new[j] <- pts$x[j] + cos(pts$angle[j]) * pts$dist[j] /
+            (cos(pts$y[j] * pi / 180) * 111321)
+
+          temp$in_new[j] <- sp::point.in.polygon(pts$x_new[j], pts$y_new[j],
+                                                 temp$x, temp$y)
+        }
+
+        if (temp$in_new[j] > 1){
+          temp$in_new[j] <- 1
+        }
+        trycount <- trycount + 1
+      } # for discrepant points
+    } # cycle through all points
+  } # cycle through all areas
 
   #---- step ?: plot original points ----
-# add progress bar - plot original points
-myplots <- list()
-myplots$original <- plotGMcompare(bound = myshps$bound, point = myshps$point,
-                                  maskvars = maskvars)
+  # add progress bar - plot original points
+  myplots <- list()
+  myplots$original <- plotGMcompare(bound = myshps$bound, point = myshps$point,
+                                    maskvars = maskvars)
+
+  # Abby: program rewritten to this point
+  #       rewrite and/or reorder everything below this point
+  # may want to go back and create min/max vectors,
+  # then assign temp min/max to the vectors
+  # and bind those vectors below
+
+  pts$coords_new <- data.frame(x = pts$x, y = pts$y)
+
+  # add my minimum/maximum distances
+  pts$data <- cbind(data.frame(myshps$point),
+                    min_dist = pts$min,
+                    max_dist = pts$max)
+
+  sp::coordinates(pts$data) <- pts$coords_new
+  # assign original projection to new points
+  sp::proj4string(pts$data) <- sp::proj4string(myshps$point)
+
+  #---- step ?: plot new points ----
+  # need to create new points layer first
+
+  myplots$new <- plotGMcompare(bound = myshps$bound, point = pts$data,
+                               maskvars = maskvars)
 
 
-# notes: order of steps
-# calculate new points
-# create layer of new points - note units
-# plot original points
-# plot new points (overlaid? - 1px)
-# save plots
-# save shapefiles
-# save kml
-# save log
+  #---- comparison plot showing both points sets at once? ----
+  # will need to revise plotGMcompare
 
 
 
 
-
-
-mynewcoords<-data.frame(mynewx,mynewy)
-mydata<-data.frame(mypoints.shp)
-#add my minimum/maximum distances
-mydata<-cbind(mydata,userdistmin,recordmax)
-names(mydata)[names(mydata)=="userdistmin"] = "min_dist" # rename
-names(mydata)[names(mydata)=="recordmax"] = "max_dist" # rename
-coordinates(mydata)<-mynewcoords
-proj4string(mydata)<-proj4string(mypoints.shp) #assign original projection to new points
 
 #dev.new()
 #use points to add new data to same plot
@@ -544,6 +607,23 @@ names(mydata)[names(mydata)=="coords.x2"]<-"prev_y" #change the name of the old 
 #write  out shapefile using OGR
 #output file doesn't seem to have projection
 writeOGR(mydata, userpathout, userfileout, driver="ESRI Shapefile",verbose=TRUE,overwrite_layer=TRUE) #seems fast
+
+#---- step ?: plot new points ----
+# need to create new points layer first
+
+myplots$new <- plotGMcompare(bound = myshps$bound, point = myshps$point,
+                             maskvars = maskvars)
+
+# notes: order of steps
+# calculate new points
+# create layer of new points - note units
+# plot original points
+# plot new points (overlaid? - 1px)
+# save plots
+# save shapefiles
+# save kml
+# save log
+
 
 
 
@@ -619,6 +699,13 @@ write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
 
 setStatusBar(paste("NYSDOH Geomask Tool: find your results in: ",userpathout))
 
+
+
+#---- save user settings ----
+# for testing; move to end later
+# save relevant objects
+save(file = paste0(filevars$userout, "_settings.Rdata"),
+     list = c("filevars", "maskvars", "mysettings"))
 
 
 
