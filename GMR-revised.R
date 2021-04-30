@@ -398,8 +398,7 @@ if (!mysettings$quit) {
                (cos(pts$y * pi / 180) * 111321)
 
   #---- check new points ----
-
-  flag <- list(max = FALSE, min = FALSE)
+  maskvars$log <- ""
 
   # Gwen: get coordinates for polygons, and check if points are inside
   # Abby: bypassing loops; using i = 1; j = 117 to test
@@ -427,6 +426,7 @@ if (!mysettings$quit) {
 
     for (j in 1:length(temp$in_old)) { # check each area
       # reset these values to defaults
+      flag <- list(max = FALSE, min = FALSE)
       trycount <- 0
       if (temp$in_old[j] > 0) { # if point is in area or on edge/vertex
 
@@ -518,6 +518,25 @@ if (!mysettings$quit) {
         }
         trycount <- trycount + 1
       } # for discrepant points
+
+      # warn user if minimum or maximum have been changed
+      flag$log <- ""
+      if (flag$max | flag$min) {
+        flag$log <- paste("The geomasker had difficulty moving point", j,
+                          "in area", i, ". For this point,")
+      }
+      if (flag$max & flag$min) {
+        flag$log <- paste(flag$log, "minimum and maximum distances",
+                          "were changed.")
+      } else if (flag$max) {
+        flag$log <- paste(flag$log, "maximum distances were changed.")
+      } else if (flag$min) {
+        flag$log <- paste(flag$log, "minimum distances were changed.")
+      }
+
+      if (!flag$log == "") {
+        maskvars$log <- paste0(maskvars$log, flag$log, " \n")
+      }
     } # cycle through all points
   } # cycle through all areas
 
@@ -536,18 +555,18 @@ if (!mysettings$quit) {
   pts$coords_new <- data.frame(x = pts$x, y = pts$y)
 
   # add my minimum/maximum distances
-  pts$data <- cbind(data.frame(myshps$point),
-                    min_dist = pts$min,
-                    max_dist = pts$max)
+  myshps$new <- cbind(data.frame(myshps$point),
+                      min_dist = pts$min,
+                      max_dist = pts$max)
 
-  sp::coordinates(pts$data) <- pts$coords_new
+  sp::coordinates(myshps$new) <- pts$coords_new
   # assign original projection to new points
-  sp::proj4string(pts$data) <- sp::proj4string(myshps$point)
+  sp::proj4string(myshps$new) <- sp::proj4string(myshps$point)
 
   #---- step ?: plot new points ----
   # need to create new points layer first
 
-  myplots$new <- plotGMcompare(bound = myshps$bound, point = pts$data,
+  myplots$new <- plotGMcompare(bound = myshps$bound, point = myshps$new,
                                maskvars = maskvars)
 
 
@@ -560,45 +579,13 @@ if (!mysettings$quit) {
 
 #dev.new()
 #use points to add new data to same plot
-points(mydata, pch=24, col="black",bg="blue") #produces green triangles outlined in black
+points(mydata, pch=24, col="black",bg="blue")
+  #produces green triangles outlined in black
 title("Points before and after moving")
-legend(x="topleft",legend=c("before","after"),horiz=FALSE,pch=c(21,24),col=c("black","black"),pt.bg=c("red","blue"))
+legend(x="topleft",legend=c("before","after"),
+       horiz=FALSE,pch=c(21,24),col=c("black","black"),pt.bg=c("red","blue"))
 
-userfileout<-"" #set as default missing
 endtime<-Sys.time()
-
-#warn user if minimum or maximum have been changed
-if(minchangeflag==TRUE&&maxchangeflag==TRUE){dlgMessage("There was difficulty moving the points within the area specified.  Maximum and minimum distances were changed for at least some points.  Please check output file for details",title="WARNING: Parameters changed",type="ok",default=1,icon="warning")}
-
-if(minchangeflag==TRUE&&maxchangeflag==FALSE){dlgMessage("There was difficulty moving the points within the area specified.  Minimum distances were changed for at least some points.  Please check output file for details",title="WARNING: Parameters changed",type="ok",default=1,icon="warning")}
-
-if(minchangeflag==FALSE&&maxchangeflag==TRUE){dlgMessage("There was difficulty moving the points within the area specified.  Maximum distances were changed for at least some points.  Please check output file for details",title="WARNING: Parameters changed",type="ok",default=1,icon="warning")}
-
-#get the user to enter filename to save file
-setStatusBar(paste("NYSDOH Geomask Tool: save file"))
-
-while(userfileout==""){
-userout<-dlgSave(title = "Save Moved Points As", defaultFile = "", defaultDir = "",defaultExt = "", filters = c("Shapefiles (*.shp)", "*.shp"))$res
-#now remove any file extention
-periodloc=regexpr(".",userout,fixed=TRUE) #will be -1 if no match, otherwise location(s) of matches
-if(periodloc>0){userout<-substr(userout,1,periodloc[1]-1)}
-
-
-#find output file name and path
-slashloc<-max(unlist(gregexpr("/",userout,fixed=TRUE))) #find location of last slash, divides path and file name
-userfileout<-substr(userout,slashloc+1,nchar(userout))
-userpathout<-substr(userout,1,slashloc-1)
-#filename shouldn't contain ;=+<>|"[]/\'<>:*?
-
-checkfile<-regexpr(";|:|\\+|=|<|>|\\||\\[|\\]|/|\"|'|\\*|\\?\n",userfileout,perl=TRUE)
-if(checkfile[1]!="-1"){userfileout<-""}
-
-checkfile<-charmatch("\\",userfileout,nomatch=-1)
-if(checkfile[1]!="-1"){userfileout<-""}
-
-if(userfileout==""){
-dlgMessage("Your file name may have been invalid.  Please reenter your file name.", title="WARNING", type="ok")}
-} #end while no good file name
 
 #change names of old coordinates
 names(mydata)[names(mydata)=="coords.x1"]<-"prev_x" #change the name of the old coordinates
@@ -623,7 +610,7 @@ myplots$new <- plotGMcompare(bound = myshps$bound, point = myshps$point,
 # save shapefiles
 # save kml
 # save log
-
+maskvars$log
 
 
 
