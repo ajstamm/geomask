@@ -165,10 +165,10 @@ while(step < 7) { # gwen: get user input until finalized
 
     maskvars$point_id <-
       gatpkg::inputGATvariable(mylist = temp$items, instruction = temp$msg,
-                               title = "Boundary Variable", checkopt = "",
+                               title = "Point ID Variable", checkopt = "",
                                checkbox = FALSE, help = temp$hlp, step = step,
-                               helppage = "inputGATboundary", myvar = NULL,
-                               check = borders, backopt = FALSE)
+                               helppage = "inputGATvariable", myvar = NULL,
+                               check = "", backopt = FALSE)
 
   }
 
@@ -214,25 +214,38 @@ while(step < 7) { # gwen: get user input until finalized
         myshps$bound <- sf::st_set_crs(myshps$bound, sf::st_crs(myshps$point))
         myshps$bound <- sf::st_transform(myshps$bound, sf::st_crs(myshps$point))
 
-        myshps$bound <- dplyr::mutate(myshps$bound, bound_id = dplyr::row_number())
-        myshps$bound <- dplyr::select(myshps$bound, bound_id)
+        # myshps$bound <- dplyr::mutate(myshps$bound, bound_id = dplyr::row_number())
+        # myshps$bound <- dplyr::select(myshps$bound, bound_id)
+
+        msg <- paste("Please select the variable that \nidentifies boundaries within",
+                     "\nwhich your points should be relocated.")
+        hlp <- paste0("Select your boundary variable. \n",
+                      "  \u2022  To continue,  click 'Next >'. \n",
+                      "  \u2022  To quit the Geomasker, click 'Cancel'.")
+
+        temp$items <- c()
+        temp$data <- data.frame(myshps$bound)
+        temp$names <- names(temp$data)
+
+        for (i in 1:(ncol(temp$data) - 1)) {
+          t <- table(temp$data[, temp$names[i]])
+          if (length(t) == nrow(temp$data)) {
+            temp$items <- c(temp$items, temp$names[i])
+          }
+        }
+
+        maskvars$bound_id <-
+          gatpkg::inputGATvariable(mylist = temp$items, instruction = temp$msg,
+                                   title = "Boundary Variable", checkopt = "",
+                                   checkbox = FALSE, help = temp$hlp, step = step,
+                                   helppage = "inputGATvariable", myvar = NULL,
+                                   check = "", backopt = FALSE)
+
 
         step <- 3
       }
     }
 
-    msg <- paste("Please select the variable that \nidentifies boundaries within",
-                 "\nwhich your points should be relocated.")
-    hlp <- paste0("Select your boundary variable. \n",
-                  "  \u2022  To continue,  click 'Next >'. \n",
-                  "  \u2022  To quit the Geomasker, click 'Cancel'.")
-
-    maskvars$bound_id <-
-      gatpkg::inputGATvariable(mylist = boundaryitems, instruction = msg,
-                               title = "Boundary Variable", checkopt = "",
-                               checkbox = FALSE, help = hlp, step = step,
-                               helppage = "inputGATboundary", myvar = NULL,
-                               check = borders, backopt = FALSE)
 
   }
 
