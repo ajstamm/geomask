@@ -41,37 +41,19 @@
 
 
 #---- libraries ----
-# abby: change function calls to include library
-#       then delete this whole section
-# gwen: load default libraries. Need this to run as batch.
-# until after initial compile
 devtools::load_all("P:/Sections/EHS/Staff/ajs11/R/pkg/geomask/R")
 # confirmed required
   #library(tcltk)
   #library(rgdal)
   #library(gatpkg)
   #library(sp)
-
-
 # requires GAT because I don't feel like being redundant
-# rewrite locateGATshapefile to read that directly, too? yes
-#library(datasets)
-#library(utils)
-#library(grDevices)
-#library(graphics)
-#library(stats)
-#library(methods)
-#library(gpclib) #in case not automaticaly loaded
-#might be disabled by default, this enables it
-#if(exists("gpclibPermit")==TRUE){gpclibPermit()}
-#library(svDialogs) #for guiDlgOpen, it needs svMisc
-#tclRequire("BWidget")
-
 
 #---- settings ----
+# add ways to define and include point ID and boundary ID by name
 mysettings <- list(version = "1.4.0",
+                   pkgdate = "2023-04-17",
                    # packageDescription("geomask")$Version,
-                   pkgdate = "2021-01-05",
                    # packageDescription("geomask")$Date,
                    starttime = Sys.time()) # needed for the log
 
@@ -81,7 +63,7 @@ temp <- list(quit = FALSE, backopt = TRUE)
 step <- 1
 
 # for testing; read in settings file
-# later, set up menu confiurmation like in GAT
+# later, set up menu confirmation like in GAT
 settings <- paste("P:/Sections/EHS/Staff/ajs11/R/tools/geomaskTest/results",
                   "save_test_settings.Rdata", sep = "/")
 
@@ -91,12 +73,10 @@ if (!is.null(settings)) {
   temp$flagconfirm <- TRUE
   filevars$userout <- paste0(filevars$userout, "_2")
   filevars$fileout <- paste0(filevars$fileout, "_2")
-  myshps$point <- rgdal::readOGR(dsn = filevars$pointpath,
-                                 layer = filevars$pointfile,
-                                 stringsAsFactors = FALSE)
-  myshps$bound <- rgdal::readOGR(dsn = filevars$boundpath,
-                                 layer = filevars$boundfile,
-                                 stringsAsFactors = FALSE)
+  myshps$point <- sf::st_read(dsn = filevars$pointpath,
+                              layer = filevars$pointfile)
+  myshps$bound <- sf::st_read(dsn = filevars$boundpath,
+                              layer = filevars$boundfile)
 } else {
   maskvars <- list(min = 100, max = 1000, unit = "meters")
   filevars <- list(pointin = "", boundin = "")
@@ -117,6 +97,7 @@ tpb <- tcltk::tkProgressBar(title = pb$title, label = pb$label, min = 0,
 
 while(step < 7) { # gwen: get user input until finalized
   #---- step 1: request point shapefile ----
+  # request or create point ID
   while (step == 1 & !temp$quit) {
     pb <- list(title = "NYSDOH Geomask Tool: identify shapefile",
                label = "Identifying and selecting the point-level shapefile.")
@@ -136,40 +117,63 @@ while(step < 7) { # gwen: get user input until finalized
       temp$quit <- TRUE
     } else {
       # only care if file is point-level
-      myshps$point <- rgdal::readOGR(dsn = filevars$pointpath,
-                                     layer = filevars$pointfile,
-                                     stringsAsFactors = FALSE)
+      myshps$point <- sf::st_read(dsn = filevars$pointpath,
+                                  layer = filevars$pointfile)
 
       # error checking
-      if (class(myshps$point) != "SpatialPointsDataFrame") {
+      if (!sum(sf::st_geometry_type(myshps$point) == "POINT") ==
+           nrow(myshps$point)) {
         # message: wrong kind of shapefile; repeat dialog
         temp$msg <- paste("The shapefile", filevars$filein,
-                          "does not contain points.\n",
+                          "contains non-point geographies.\n",
                           "Please select a new shapefile.")
         tcltk::tkmessageBox(title = "Shapefile invalid", type = "ok",
                             icon = "error", message = temp$msg)
       } else {
         # shift to error checking
-        maskvars$projection <- grepl("longlat", sp::proj4string(myshps$point),
-                                     fixed = TRUE)
+        maskvars$projection <- sum(grepl("long", sf::st_crs(myshps$point))) > 0
 
         if (!maskvars$projection) {
           # if FALSE, convert to lat/long
           # WGS84 is common: EPSG code 4326
           # allow user to select projection from list?
-          myshps$point <- sp::spTransform(myshps$point,
-                                          sp::CRS("+init=epsg:4326"))
+          myshps$point <- sf::st_set_crs(myshps$point, 4326)
+          myshps$point <- sf::st_transform(myshps$point, 4326)
         }
-        # derive lat/long from geometry, thereby ignoring data entirely
-        myshps$point@data$gm_lon <- myshps$point@coords[, 1] # x
-        myshps$point@data$gm_lat <- myshps$point@coords[, 2] # y
 
         step <- 2
       }
     }
+
+    temp$msg <- paste("Please select the variable that \nidentifies your points.")
+    temp$hlp <- paste0("Select your point ID variable. \n",
+                  "  \u2022  To continue,  click 'Next >'. \n",
+                  "  \u2022  To quit the Geomasker, click 'Cancel'.")
+
+    temp$items <- c()
+    temp$data <- data.frame(myshps$point)
+    temp$names <- names(temp$data)
+
+    for (i in 1:(ncol(temp$data) - 1)) {
+      t <- table(temp$data[, temp$names[i]])
+      if (length(t) == nrow(temp$data)) {
+        temp$items <- c(temp$items, temp$names[i])
+      }
+    }
+
+
+
+    maskvars$point_id <-
+      gatpkg::inputGATvariable(mylist = temp$items, instruction = temp$msg,
+                               title = "Boundary Variable", checkopt = "",
+                               checkbox = FALSE, help = temp$hlp, step = step,
+                               helppage = "inputGATboundary", myvar = NULL,
+                               check = borders, backopt = FALSE)
+
   }
 
   #---- step 2: request boundary shapefile ----
+  # request boundary variable/ID or create one
   while (step == 2 & !temp$quit) {
     pb <- list(title = "NYSDOH Geomask Tool: identify boundary file",
                label = "Identifying and selecting the boundary shapefile.")
@@ -189,31 +193,47 @@ while(step < 7) { # gwen: get user input until finalized
       temp$quit <- TRUE
     } else {
       # only care if file is polygon-level
-      myshps$bound <- rgdal::readOGR(dsn = filevars$boundpath,
-                                     layer = filevars$boundfile,
-                                     stringsAsFactors = FALSE)
+      myshps$bound <- sf::st_read(dsn = filevars$boundpath,
+                                  layer = filevars$boundfile)
       # error checking
       temp$error <- FALSE
-      if (class(myshps$bound) != "SpatialPolygonsDataFrame") {
-        # message: wrong kind of shapefile; repeat dialog
-        temp$issue <- "polygons."
+      if (!sum(sf::st_geometry_type(myshps$bound) == "POLYGON") ==
+          nrow(myshps$bound)) {
         temp$error <- TRUE
       } else {
         step <- step + 1
       }
       if (temp$error) {
         temp$msg <- paste("The shapefile", filevars$boundin,
-                          "does not contain", temp$issue, "\n",
+                          "contains non-polygon geographies. \n",
                           "Please select a new shapefile.")
         tcltk::tkmessageBox(title = "Shapefile invalid", type = "ok",
                             icon = "error", message = temp$msg)
         temp$error <- FALSE
       } else {
-        myshps$bound <- sp::spTransform(myshps$bound,
-                                        sp::proj4string(myshps$point))
+        myshps$bound <- sf::st_set_crs(myshps$bound, sf::st_crs(myshps$point))
+        myshps$bound <- sf::st_transform(myshps$bound, sf::st_crs(myshps$point))
+
+        myshps$bound <- dplyr::mutate(myshps$bound, bound_id = dplyr::row_number())
+        myshps$bound <- dplyr::select(myshps$bound, bound_id)
+
         step <- 3
       }
     }
+
+    msg <- paste("Please select the variable that \nidentifies boundaries within",
+                 "\nwhich your points should be relocated.")
+    hlp <- paste0("Select your boundary variable. \n",
+                  "  \u2022  To continue,  click 'Next >'. \n",
+                  "  \u2022  To quit the Geomasker, click 'Cancel'.")
+
+    maskvars$bound_id <-
+      gatpkg::inputGATvariable(mylist = boundaryitems, instruction = msg,
+                               title = "Boundary Variable", checkopt = "",
+                               checkbox = FALSE, help = hlp, step = step,
+                               helppage = "inputGATboundary", myvar = NULL,
+                               check = borders, backopt = FALSE)
+
   }
 
   #---- step 3: min/max distance ----
@@ -345,6 +365,7 @@ while(step < 7) { # gwen: get user input until finalized
     tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                             label = pb$label)
 
+    # rewrite this dialog to mirror GAT
     temp$checkmsg <- paste0("Do you want to move points from ",
                             filevars$pointfile, "\n", "at least ",
                             maskvars$min, " ", maskvars$unit, " and at most ",
@@ -371,155 +392,90 @@ rm(temp)
 if (!mysettings$quit) {
   # Abby: need to add progress bar steps
   #       do this later after full program rewritten
+
+  set.seed(mysettings$starttime)
   #---- isolate old points ----
   # for point calculations
-  pts <- list(n = nrow(myshps$point))
-  # save coordinates
-  pts$coords <- sp::coordinates(myshps$point)
-  pts$x <- pts$coords[,1]
-  pts$y <- pts$coords[,2]
+  # derive lat/long from geometry, thereby ignoring data entirely
+  myshps$point$orig_lon <- sf::st_coordinates(myshps$point)[, 1]
+  myshps$point$orig_lat <- sf::st_coordinates(myshps$point)[, 2]
 
-  #---- calculate new points ----
-  # gwen: set seed based on time to avoid duplicate random number sequences
-  set.seed(mysettings$starttime)
-  pts$dist <- runif(pts$n, min = maskvars$min, max = maskvars$max)
-  pts$angle <- runif(pts$n, min = 0, max = 2 * pi)
-  pts$min <- rep(maskvars$min, length(pts$x))
-  pts$max <- rep(maskvars$max, length(pts$x))
+  myshps$intersect <- sf::st_intersection(myshps$point, myshps$bound)
+  myshps$buffer <- data.frame(ID = numeric())
+  myshps$shifted <- data.frame(ID = numeric())
 
-  # gwen: make sure arguments of sine/cosine are in radians
-  #       approx 111 km per degree latitude
-  #       formulas to move points:
-  # y: original latitude + sin (r1 * 2 * pi()) * r2 * 500 / 111000
-  # x: (original longitude + cos(r1 * 2 * pi()) * r2 * 500) /
-  #    (cos(RADIANS(original latitude)) * 111321)
-  pts$y_new <- pts$y + sin(pts$angle) * pts$dist / 111000
-  pts$x_new <- pts$x + cos(pts$angle) * pts$dist /
-               (cos(pts$y * pi / 180) * 111321)
+  # ---- calculate new points ----
+  # create temp max/min variables
+  # create flag variable for number max/min iterations
+  # if buffer fails, min = min/2 & max = min, reiterate if needed
+  # subset remaining without valid buffer
+  # will need to rerun buffer for just those
+  # I'd love to drop the loop, but for now it works
+  # possibly create buffers for each point, then recreate on the fly if needed?
+  temp <- list(max = maskvars$max,
+               min = maskvars$min,
+               int = myshps$intersect,
+               iter = 0)
 
-  #---- check new points ----
-  maskvars$log <- ""
+  while (nrow(temp$int) > 0) {
+    temp$bufmin <- sf::st_buffer(temp$int, temp$min)
+    temp$bufmin <- dplyr::select(temp$bufmin, ID, bound_id)
+    temp$bufmax <- sf::st_buffer(temp$int, temp$max)
+    temp$bufmax <- dplyr::select(temp$bufmax, ID)
 
-  # Gwen: get coordinates for polygons, and check if points are inside
-  # Abby: bypassing loops; using i = 1; j = 117 to test
-  for (i in 1:length(myshps$bound@polygons)) {
-    # temporary copies ----
-    temp <- list()
-      # get polygon values ----
-    temp$shp <- myshps$bound@polygons[[i]]@Polygons[[1]]  # myp2
-    temp$coords <- temp$shp@coords # mypc
-    temp$x <- temp$coords[, 1] # mypx
-    temp$y <- temp$coords[, 2] # mypy
+    for (i in 1:nrow(temp$int)) {
 
-      # check points in polygons ----
-    # 0 = exterior, 1 = interior, 2 & 3 are on edge/vertex
-    # formerly checkifin, checkifinnew
-    temp$in_old <- sp::point.in.polygon(pts$x, pts$y, temp$x, temp$y)
-    temp$in_new <- sp::point.in.polygon(pts$x_new, pts$y_new, temp$x, temp$y)
-
-    # loop through areas ----
-    # find what area the point is in
-    # correct maximum distances based on the maximum possible
-    # in the area if needed
-    # Abby: apparently we are always forcing max distance?
-    #       not truly random, then?
-
-    for (j in 1:length(temp$in_old)) { # check each area
-      # reset these values to defaults
-      flag <- list(max = FALSE, min = FALSE)
-      trycount <- 0
-      if (temp$in_old[j] > 0) { # if point is in area or on edge/vertex
-
-        # reset maximum to maximum possible given boundary restriction
-        # units in kilometers, so multiply by 1000 to get meters
-        temp$dist <- sp::spDistsN1(temp$coords, myshps$point@coords[j, ],
-                                   longlat = TRUE) * 1000
-
-        # temp$coords = polygon coordinates
-        # Gwen: keep track of the maximum maximum tried -
-        #       either user entry or farthest point in the boundary polygon
-
-
-        # myshps$point@coords = original point coordinates
-        # maximum distance is outside farthest point of polygon - unnecessary
-        if (max(temp$dist) < maskvars$max) {
-          temp$max <- max(temp$dist)
-          flag$max <- TRUE
+      temp$bufmin1 <- dplyr::slice(temp$bufmin, i)
+      temp$bufmax1 <- dplyr::slice(temp$bufmax, i)
+      temp$diff1 <- sf::st_difference(temp$bufmin1, temp$bufmax1)
+      temp$bound1 <- dplyr::filter(myshps$bound,
+                                   bound_id == temp$bufmin1$bound_id[1])
+      temp$int1 <- sf::st_intersection(temp$bound1, temp$diff1)
+      if (nrow(t5) > 0) {
+        temp$shift1 <- sf::st_as_sf(sf::st_sample(temp$int1, 1),
+                                    crs = sf::st_crs(temp$bufmin1))
+        temp$shift1$ID <- temp$bufmin1$ID
+        temp$shift1$bound_id <- temp$bufmin1$bound_id
+        temp$shift1$mask_lon <- sf::st_coordinates(temp$shift1)[,1]
+        temp$shift1$mask_lat <- sf::st_coordinates(temp$shift1)[,2]
+        temp$shift1$flag <- temp$iter
+        if (nrow(myshps$buffer) == 0) {
+          myshps$buffer <- temp$int1
+          myshps$shifted <- temp$shift1
         } else {
-          temp$max <- maskvars$max
+          myshps$buffer <- dplyr::bind_rows(myshps$buffer, temp$int1)
+          myshps$shifted <- dplyr::bind_rows(myshps$shifted, temp$shift1)
         }
+      }
+    }
 
-        if (maskvars$min > temp$max / 2) {
-          temp$min <- temp$max / 2
-          flag$min <- TRUE
-        } else {
-          temp$min <- maskvars$min
-        }
+    temp$int <- dplyr::filter(myshps$intersect,
+                              !ID %in% myshps$shifted$ID)
+    temp$max <- temp$min
+    temp$min <- temp$min / 2
+    temp$iter <- temp$iter + 1
+  }
 
-        if (flag$min | flag$max) {
-          pts$min[j] <- temp$min
-          pts$max[j] <- temp$max
-          pts$dist[j] <- runif(1, min = temp$min, max = temp$max)
-          pts$angle[j] <- runif(1, min = 0, max = 2 * pi)
-          pts$y_new[j] <- pts$y[j] + sin(pts$angle[j]) * pts$dist[j] / 111000
-          pts$x_new[j] <- pts$x[j] + cos(pts$angle[j]) * pts$dist[j] /
-            (cos(pts$y[j] * pi / 180) * 111321)
+  rm(temp)
 
-          temp$in_new[j] <- sp::point.in.polygon(pts$x_new[j], pts$y_new[j],
-                                                 temp$x, temp$y)
-        }
 
-        if (temp$in_new[j] > 1){
-          temp$in_new[j] <- 1
-        }
-        trycount <- trycount + 1
-      } # end if point is in area
+  # join intersect and shifted datasets
+  temp <- data.frame(myshps$shifted)[, c("ID", "bound_id", "long", "lat")]
+  myshps$point <- dplyr::full_join(myshps$point, temp, by = "ID")
 
-      while(temp$in_old[j] == 1 && temp$in_new[j] == 0) {
-        # start first check ----
-        # print(paste("moving point",as.character(p)," so it is within boundary"))
-        # if the old point is in an area, but the new point is not, fix it
-        trycount <- trycount + 1
 
-        if (trycount / 100 == floor(trycount / 100)) {
-          # if try at least 100 times and cannot get a point in the polygon
-          # change the maximum distance
-          temp$max <- 0.9 * temp$max
-          if (temp$min > temp$max / 2){
-            temp$min <- temp$max / 2
-            flag$min <- TRUE
-          }
-          flag$max <- TRUE
-        } # end changing max distance after 100 tries
 
-        if (trycount / 10 == floor(trycount / 10)) {
-          # If try at least 10 times and cannot get a point in the polygon,
-          # change minimum distance
-          temp$min <- 0.9 * temp$min
-          flag$min <- TRUE
-        }
 
-        # get new candidate point
-        if (flag$min | flag$max) {
-          pts$min[j] <- temp$min
-          pts$max[j] <- temp$max
-          pts$dist[j] <- runif(1, min = temp$min, max = temp$max)
-          pts$angle[j] <- runif(1, min = 0, max = 2 * pi)
-          pts$y_new[j] <- pts$y[j] + sin(pts$angle[j]) * pts$dist[j] / 111000
-          pts$x_new[j] <- pts$x[j] + cos(pts$angle[j]) * pts$dist[j] /
-            (cos(pts$y[j] * pi / 180) * 111321)
 
-          temp$in_new[j] <- sp::point.in.polygon(pts$x_new[j], pts$y_new[j],
-                                                 temp$x, temp$y)
-        }
+  # testing with old object names - obsolete
+  # plot(t4$geometry, border = "green")
+  # plot(t2$geometry, border = "blue", add = TRUE)
+  # plot(t1$geometry, border = "red", add = TRUE)
+  # plot(t5$geometry, col = "yellow", border = "transparent", add = TRUE)
+  # plot(sf::st_geometry(t6), col = "black", add = TRUE, pch = 20)
 
-        if (temp$in_new[j] > 1){
-          temp$in_new[j] <- 1
-        }
-        trycount <- trycount + 1
-      } # for discrepant points
-
-      # warn user if minimum or maximum have been changed
+  # warn user if minimum or maximum have been changed - add to log
+  # created flag variable to try bypassing this
       flag$log <- ""
       if (flag$max | flag$min) {
         flag$log <- paste("The geomasker had difficulty moving point", j,
@@ -537,20 +493,18 @@ if (!mysettings$quit) {
       if (!flag$log == "") {
         maskvars$log <- paste0(maskvars$log, flag$log, " \n")
       }
-    } # cycle through all points
-  } # cycle through all areas
+     # cycle through all points
 
   #---- step ?: plot original points ----
+  # Abby: program rewritten to this point
+  #       rewrite and/or reorder everything below this point
   # add progress bar - plot original points
+# check if plotGMcompare has been updated to sf
+
   myplots <- list()
   myplots$original <- plotGMcompare(bound = myshps$bound, point = myshps$point,
                                     maskvars = maskvars)
 
-  # Abby: program rewritten to this point
-  #       rewrite and/or reorder everything below this point
-  # may want to go back and create min/max vectors,
-  # then assign temp min/max to the vectors
-  # and bind those vectors below
 
   pts$coords_new <- data.frame(x = pts$x, y = pts$y)
 
@@ -603,13 +557,14 @@ myplots$new <- plotGMcompare(bound = myshps$bound, point = myshps$point,
 
 # notes: order of steps
 # calculate new points
-# create layer of new points - note units
+# create layer of new points - note units in log
 # plot original points
 # plot new points (overlaid? - 1px)
 # save plots
 # save shapefiles
 # save kml
 # save log
+
 maskvars$log
 
 
