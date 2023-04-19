@@ -42,11 +42,7 @@
 
 #---- libraries ----
 devtools::load_all("P:/Sections/EHS/Staff/ajs11/R/pkg/geomask/R")
-# confirmed required
-  #library(tcltk)
-  #library(rgdal)
-  #library(gatpkg)
-  #library(sp)
+# confirmed required: tcltk, gatpkg, sf
 # requires GAT because I don't feel like being redundant
 
 #---- settings ----
@@ -61,6 +57,9 @@ mysettings <- list(version = "1.4.0",
 myshps <- list()
 temp <- list(quit = FALSE, backopt = TRUE)
 step <- 1
+bgcol <- "thistle1"
+buttoncol <- "plum2"
+quitopt <- "Quit Geomasker"
 
 # for testing; read in settings file
 # later, set up menu confirmation like in GAT
@@ -141,34 +140,42 @@ while(step < 7) { # gwen: get user input until finalized
           myshps$point <- sf::st_transform(myshps$point, 4326)
         }
 
-        step <- 2
+        temp$msg <- paste("Please select the variable that \nidentifies your points.")
+        temp$hlp <- paste0("Select your point ID variable. \n",
+                           "  \u2022  To continue,  click 'Next >'. \n",
+                           "  \u2022  To quit the Geomasker, click 'Cancel'.")
+
+        temp$items <- c()
+        temp$data <- data.frame(myshps$point)
+        temp$names <- names(temp$data)
+
+        for (i in 1:(ncol(temp$data) - 1)) {
+          t <- table(temp$data[, temp$names[i]])
+          if (length(t) == nrow(temp$data)) {
+            temp$items <- c(temp$items, temp$names[i])
+          }
+        }
+
+        maskvars$point_id <-
+          gatpkg::inputGATvariable(mylist = temp$items, instruction = temp$msg,
+                                   title = "Point ID Variable", checkopt = "",
+                                   checkbox = FALSE, help = temp$hlp, step = step,
+                                   helppage = "inputGATvariable", myvar = NULL,
+                                   check = "", backopt = temp$backopt,
+                                   bgcol = bgcol, buttoncol = buttoncol,
+                                   quitopt = quitopt)$myvar
+
+        if (temp$flagconfirm) {
+          step <- 7
+        } else if (maskvars$point_id == "cancel") {
+          step <- 10
+          temp$quit <- TRUE
+        } else {
+          step <- step + 1
+        }
       }
     }
 
-    temp$msg <- paste("Please select the variable that \nidentifies your points.")
-    temp$hlp <- paste0("Select your point ID variable. \n",
-                  "  \u2022  To continue,  click 'Next >'. \n",
-                  "  \u2022  To quit the Geomasker, click 'Cancel'.")
-
-    temp$items <- c()
-    temp$data <- data.frame(myshps$point)
-    temp$names <- names(temp$data)
-
-    for (i in 1:(ncol(temp$data) - 1)) {
-      t <- table(temp$data[, temp$names[i]])
-      if (length(t) == nrow(temp$data)) {
-        temp$items <- c(temp$items, temp$names[i])
-      }
-    }
-
-
-
-    maskvars$point_id <-
-      gatpkg::inputGATvariable(mylist = temp$items, instruction = temp$msg,
-                               title = "Point ID Variable", checkopt = "",
-                               checkbox = FALSE, help = temp$hlp, step = step,
-                               helppage = "inputGATvariable", myvar = NULL,
-                               check = "", backopt = FALSE)
 
   }
 
@@ -239,10 +246,19 @@ while(step < 7) { # gwen: get user input until finalized
                                    title = "Boundary Variable", checkopt = "",
                                    checkbox = FALSE, help = temp$hlp, step = step,
                                    helppage = "inputGATvariable", myvar = NULL,
-                                   check = "", backopt = FALSE)
+                                   check = "", backopt = temp$backopt,
+                                   bgcol = bgcol, buttoncol = buttoncol,
+                                   quitopt = quitopt)$myvar
 
 
-        step <- 3
+        if (temp$flagconfirm) {
+          step <- 7
+        } else if (maskvars$point_id == "cancel") {
+          step <- 10
+          temp$quit <- TRUE
+        } else {
+          step <- step + 1
+        }
       }
     }
 
@@ -258,7 +274,9 @@ while(step < 7) { # gwen: get user input until finalized
 
     templist <- selectGMdistances(step = step, min = maskvars$min,
                                   max = maskvars$max, unit = maskvars$unit,
-                                  backopt = temp$backopt)
+                                  backopt = temp$backopt,
+                                  bgcol = bgcol, buttoncol = buttoncol,
+                                  quitopt = quitopt)
 
     maskvars$min <- as.numeric(gsub(",", "", templist$min))
     maskvars$max <- as.numeric(gsub(",", "", templist$max))
@@ -269,7 +287,7 @@ while(step < 7) { # gwen: get user input until finalized
       step <- 10
       temp$quit <- TRUE
     } else if (maskvars$unit == "back") {
-      step <- 1
+      step <- step - 1
     } else {
       # check that minimum < maximum and minimum > 0
       temp$msg <- ""
@@ -307,7 +325,11 @@ while(step < 7) { # gwen: get user input until finalized
         tcltk::tkmessageBox(title = "Distance selections invalid", type = "ok",
                             icon = "error", message = temp$msg)
       } else {
-        step <- 4
+        if (temp$flagconfirm) {
+          step <- 7
+        } else {
+          step <- step + 1
+        }
       }
     }
     if (step == 4) {
@@ -332,7 +354,9 @@ while(step < 7) { # gwen: get user input until finalized
                label = "Identifying whether to save a KML file.")
     tcltk::setTkProgressBar(tpb, value = step, title = pb$title, label = pb$label)
 
-    mysettings$kml <- gatpkg::saveGATkml(step = step, backopt = TRUE)
+    mysettings$kml <- gatpkg::saveGATkml(step = step, backopt = TRUE,
+                                         bgcol = bgcol, buttoncol = buttoncol,
+                                         quitopt = quitopt)
 
     if (mysettings$kml %in% c("Yes", "No")) {
       if (mysettings$kml == "Yes") {
@@ -340,7 +364,11 @@ while(step < 7) { # gwen: get user input until finalized
       } else {
         mysettings$kml <- FALSE # save the kml
       }
-      step <- 5
+      if (temp$flagconfirm) {
+        step <- 7
+      } else {
+        step <- step + 1
+      }
     } else if (mysettings$kml == "cancel") {
       temp$quit <- TRUE
       step <- 10
@@ -367,7 +395,11 @@ while(step < 7) { # gwen: get user input until finalized
       temp$quit <- TRUE
       step <- 10
     } else {
-      step <- step + 1
+      if (temp$flagconfirm) {
+        step <- 7
+      } else {
+        step <- step + 1
+      }
     }
   }
 
@@ -378,25 +410,26 @@ while(step < 7) { # gwen: get user input until finalized
     tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                             label = pb$label)
 
-    # rewrite this dialog to mirror GAT
-    temp$checkmsg <- paste0("Do you want to move points from ",
-                            filevars$pointfile, "\n", "at least ",
-                            maskvars$min, " ", maskvars$unit, " and at most ",
-                            maskvars$max, " ", maskvars$unit, "\n",
-                            "within the boundaries of ",
-                            filevars$boundfile, "?")
-    temp$checktitle <- "Masking settings confirmation"
-    temp$check <- gatpkg::inputGATmessage(title = temp$checktitle,
-                                          msg = temp$checkmsg, step = step,
-                                          buttonopt = "Fix settings",
-                                          backopt = FALSE)
-    if (temp$check == "cancel") {
-      step <- 1
-    } else {
+    temp$cancel <- confirmGMsettings(maskvars = maskvars, filevars = filevars,
+                                     savekml = mysettings$kml, step = step,
+                                     bgcol = bgcol, buttoncol = buttoncol,
+                                     quitopt = quitopt)
+
+
+    if (temp$cancel %in% c("Yes", "None")) {
+      step <- 7 # done with user input
+      # add population file
+    } else if (temp$cancel == "back") { # now irrelevant
+      step <- step - 1 # go back one
+    } else if (temp$cancel == "cancel") {
       step <- 7
-      mysettings$quit <- temp$quit
+      temp$quit <- TRUE
+    } else if (grepl("[0-9]", temp$cancel)) {
+      step <- as.numeric(gsub("[^0-9]", "", temp$cancel))
     }
+
   }
+  mysettings$quit <- temp$quit
 } # end while step
 rm(temp)
 
