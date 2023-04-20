@@ -14,7 +14,7 @@
 # 	original : Programmed in R2.13.0 for Windows XP
 #   latest prior : adapted to work in R3.0.2 for Windows 7
 #   development time : June 2011 - November 2013
-#   current: R4.0.4 on Windows 10
+#   current: R4.2.3 on Windows 10
 #
 # libraries : sp, rgdal, tcltk, svDialogs (to be updated)
 #
@@ -41,7 +41,7 @@
 
 
 #---- libraries ----
-devtools::load_all("P:/Sections/EHS/Staff/ajs11/R/pkg/geomask/R")
+devtools::load_all("R")
 # confirmed required: tcltk, gatpkg, sf
 # requires GAT because I don't feel like being redundant
 
@@ -60,11 +60,13 @@ step <- 1
 bgcol <- "thistle1"
 buttoncol <- "plum2"
 quitopt <- "Quit Geomasker"
+settings <- NULL
 
 # for testing; read in settings file
 # later, set up menu confirmation like in GAT
-settings <- paste("P:/Sections/EHS/Staff/ajs11/R/tools/geomaskTest/results",
-                  "save_test_settings.Rdata", sep = "/")
+# settings <- paste("P:/Sections/EHS/Staff/ajs11/R/tools/geomaskTest/results",
+#                   "save_test_settings.Rdata", sep = "/")
+
 
 if (!is.null(settings)) {
   load(settings)
@@ -404,7 +406,7 @@ while(step < 7) { # gwen: get user input until finalized
   }
 
   #---- step 6: confirmation ----
-  while (step == 6) {
+  while (step == 6 & !temp$quit) {
     pb <- list(title = "NYSDOH Geomask Tool: confirm settings",
                label = "Confirming your geomasking settings.")
     tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
@@ -702,7 +704,7 @@ save(file = paste0(filevars$userout, "_settings.Rdata"),
 
 } else {
   # "else" occurs only if geomasking is cancelled in the input phase
-  msg <- "You have chosen to cancel the geomasking tool."
+  msg <- "You have chosen to cancel the Geomasker."
   tcltk::tkmessageBox(title = "Process cancelled",
                       message = msg, type = "ok", icon = "warning")
 }

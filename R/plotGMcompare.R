@@ -52,30 +52,27 @@ plotGMcompare <- function(bound, point, maskvars, closemap = FALSE) {
   # plot shapefiles ####
   graphics::par(mar = c(3.5,0,2,0), mgp = c(0,0,0)) # bottom, left, top, right
 
-  mylegend <- "original areas"
-  sp::plot(bound, border = "red", col = "transparent", lty = "solid", lwd = 1)
-  if (class(point) == "SpatialPointsDataFrame") {
-    sp::plot(point, col = "black", pch = 1, add = TRUE)
-    mylegend <- c("Boundaries", "Points")
-  } else if (class(point) == "SpatialPolygonsDataFrame") {
-    sp::plot(point, border = "black", col = "transparent",
-             lty = "solid", lwd = 2, add = TRUE)
-    mylegend <- c("Original areas", "Aggregated areas")
-  }
+  plot(sf::st_geometry(bound), border = "blue", col = "transparent",
+       lty = "solid", lwd = 2)
 
-  if (class(point) == "SpatialPolygonsDataFrame") {
+  if (sum(sf::st_geometry_type(point) == "POINT") == nrow(point)) {
+    plot(sf::st_geometry(point), col = "red", add = TRUE, pch = 20)
+    mylegend <- c("  ", "Boundaries", "Points")
     legend("topleft", legend = mylegend,
-           fill = "White", border = c("red", "black"), cex = 1,
-           bty = "n", inset = 0, y.intersp = 1.25)
-  } else if (class(point) == "SpatialPointsDataFrame") {
-    mylegend2 <- paste("  ", mylegend)
-    legend("topleft", legend = mylegend,
-           fill = "White", border = c("red", "white"), cex = 1,
+           fill = "White", border = c("blue", "white"), cex = 1,
            bty = "n", inset = 0, y.intersp = 1.25)
     legend("topleft", legend = mylegend2,
-           pch = 1, col = c("white", "black"), cex = 1,
+           pch = 1, col = c("white", "red"), cex = 1,
+           bty = "n", inset = 0, y.intersp = 1.25)
+  } else if (sum(sf::st_geometry_type(point) == "POLYGON") == nrow(point)) {
+    plot(sf::st_geometry(point), border = "red", col = "transparent",
+             lty = "solid", lwd = 2, add = TRUE)
+    mylegend <- c("Boundaries", "Shifted areas")
+    legend("topleft", legend = mylegend,
+           fill = "White", border = c("blue", "red"), cex = 1,
            bty = "n", inset = 0, y.intersp = 1.25)
   }
+
 
   # add labels ####
   mytitle <- "Map showing boundaries and points"
@@ -84,17 +81,18 @@ plotGMcompare <- function(bound, point, maskvars, closemap = FALSE) {
   title(mytitle, sub = mysub, cex.main = 2)
 
   # draw arrow and scale bar ####
-  if (requireNamespace("prettymapr", quietly = TRUE)) {
-    prettymapr::addnortharrow(pos = "bottomleft", padin = c(0.2, 0.05),
-                              scale = .5, lwd = 1, border = "black",
-                              cols = c("white", "black"), text.col = "black")
-    prettymapr::addscalebar(plotunit = "mi", plotepsg = 4269, widthhint = 0.25,
-                            unitcategory = "imperial", htin = 0.1, lwd = 1,
-                            padin = c(0.7, 0.05), style = "ticks",
-                            linecol = "black", tick.cex = 0.7,
-                            labelpadin = 0.08, label.cex = 0.8,
-                            label.col = "black", pos = "bottomleft")
-  }
+  # if (requireNamespace("prettymapr", quietly = TRUE)) {
+  #   prettymapr::addnortharrow(pos = "bottomleft", padin = c(0.2, 0.05),
+  #                             scale = .5, lwd = 1, border = "black",
+  #                             cols = c("white", "black"), text.col = "black")
+  #   prettymapr::addscalebar(plotunit = "mi", plotepsg = 4269, widthhint = 0.25,
+  #                           unitcategory = "imperial", htin = 0.1, lwd = 1,
+  #                           padin = c(0.7, 0.05), style = "ticks",
+  #                           linecol = "black", tick.cex = 0.7,
+  #                           labelpadin = 0.08, label.cex = 0.8,
+  #                           label.col = "black", pos = "bottomleft")
+  # }
+
   # save map ####
   map <- recordPlot()
  # default bottom, left, top, right
