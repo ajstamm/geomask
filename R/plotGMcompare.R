@@ -10,12 +10,12 @@
 #' If plotting directly, the display may be distorted. For best results, save
 #' to a recordPlot object and write to PDF.
 #'
-#' @param bound     A spatial polygons data frame.
-#' @param point     A second spatial polygons data frame that ahould have the
-#'                  same outer boundary as the first one.
-#' @param maskvars  A list of settings for geomasking, including unit type and
+#' @param bound     Boundary layer.
+#' @param original  Original points or areas spatial layer.
+#' @param shifted   Shifted points or areas spatial layer.
+#' @param maskvars  List of settings for geomasking, including unit type and
 #'                  minimum, and maximum values.
-#' @param closemap  A boolean to denote whether to close the map window after
+#' @param closemap  Boolean denoting whether to close the map window after
 #'                  the map is drawn and saved.
 #'
 #' @examples
@@ -39,45 +39,72 @@
 # https://cran.r-project.org/web/packages/prettymapr/prettymapr.pdf
 # NAD83 = epsg:4269; WGS84, GRS80 = epsg:42310; NAD83, GRS80 = epsg:7019,
 # but function doesn't recognize them
-plotGMcompare <- function(bound, point, maskvars, closemap = FALSE) {
+plotGMcompare <- function(bound, original = NULL, shifted = NULL, maskvars,
+                          closemap = FALSE) {
+
+  # set map size
+  dev.new(noRStudioGD = TRUE, res = 1200, width = 20, height = 14)
+  dev.control('enable') # enable display list
+  graphics::par(mar = c(3.5,0,2,0), mgp = c(0,0,0)) # bottom, left, top, right
+
+  # plot shapefiles ----
+  # always draw boundary layer first
+  # then can show original layer, shifted layer, or both
+  plot(sf::st_geometry(bound), border = "green", col = "transparent",
+       lty = "solid", lwd = 1)
+  mylbl <- "Boundaries"
+  mycol <- "green"
+  mytype <- "polygon"
+
+  if (!is.null(original)) {
+    mycol <- c(mycol, "blue")
+    if (sum(sf::st_geometry_type(original) == "POINT") == nrow(original)) {
+      plot(sf::st_geometry(original), col = "blue", pch = 20, add = TRUE)
+      mylbl <- c(mylbl, "Original points")
+      mytype <- c(mytype, "point")
+    } else {
+      plot(sf::st_geometry(original), border = "blue", col = "transparent",
+           lty = "solid", lwd = 1, add = TRUE)
+      mylbl <- c(mylbl, "Original areas")
+      mytype <- c(mytype, "polygon")
+    }
+  }
+  if (!is.null(shifted)) {
+    mycol <- c(mycol, "red")
+    if (sum(sf::st_geometry_type(shifted) == "POINT") == nrow(shifted)) {
+      plot(sf::st_geometry(shifted), col = "red", pch = 20, add = TRUE)
+      mylbl <- c(mylbl, "Shifted points")
+      mytype <- c(mytype, "point")
+    } else {
+      plot(sf::st_geometry(shifted), border = "red", col = "transparent",
+           lty = "solid", lwd = 1, add = TRUE)
+      mylbl <- c(mylbl, "Shifted areas")
+      mytype <- c(mytype, "polygon")
+    }
+  }
+
+  if ("point" %in% mytype) {
+    legend("topleft", legend = mylbl, fill = "White", bty = "n", cex = 1,
+           border = c("green", rep("white", length(mycol) - 1)), inset = 0,
+           y.intersp = 1.25)
+    legend("topleft", legend = rep("", length(mylbl)), pch = 20, cex = 1,
+           col = c("white", mycol[!mycol == "green"]), inset = 0, bty = "n",
+           y.intersp = 1.25)
+
+  } else {
+    legend("topleft", legend = mylbl, fill = "White", bty = "n", cex = 1,
+           border = mycol, inset = 0, y.intersp = 1.25)
+
+  }
+
+  # add labels ----
   # function to handle numbers
   numformat <- function(num) {
     format(as.numeric(gsub(",", "", num)), big.mark=",", scientific=FALSE)
   }
-
-  # set map size
-  dev.new(noRStudioGD = TRUE, res = 1200, width = 20, height = 14)
-  # enable display list
-  dev.control('enable')
-  # plot shapefiles ####
-  graphics::par(mar = c(3.5,0,2,0), mgp = c(0,0,0)) # bottom, left, top, right
-
-  plot(sf::st_geometry(bound), border = "blue", col = "transparent",
-       lty = "solid", lwd = 2)
-
-  if (sum(sf::st_geometry_type(point) == "POINT") == nrow(point)) {
-    plot(sf::st_geometry(point), col = "red", add = TRUE, pch = 20)
-    mylegend <- c("  ", "Boundaries", "Points")
-    legend("topleft", legend = mylegend,
-           fill = "White", border = c("blue", "white"), cex = 1,
-           bty = "n", inset = 0, y.intersp = 1.25)
-    legend("topleft", legend = mylegend2,
-           pch = 1, col = c("white", "red"), cex = 1,
-           bty = "n", inset = 0, y.intersp = 1.25)
-  } else if (sum(sf::st_geometry_type(point) == "POLYGON") == nrow(point)) {
-    plot(sf::st_geometry(point), border = "red", col = "transparent",
-             lty = "solid", lwd = 2, add = TRUE)
-    mylegend <- c("Boundaries", "Shifted areas")
-    legend("topleft", legend = mylegend,
-           fill = "White", border = c("blue", "red"), cex = 1,
-           bty = "n", inset = 0, y.intersp = 1.25)
-  }
-
-
-  # add labels ####
-  mytitle <- "Map showing boundaries and points"
-  mysub <- paste("Geomasking distance:", maskvars$min, "to", maskvars$max,
-                 maskvars$unit)
+  mytitle <- "Map showing ... (need to code this)"
+  mysub <- paste("Geomasking distance:", numformat(maskvars$min), "to",
+                 numformat(maskvars$max), maskvars$unit)
   title(mytitle, sub = mysub, cex.main = 2)
 
   # draw arrow and scale bar ####

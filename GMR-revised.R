@@ -167,7 +167,7 @@ while(step < 7) { # gwen: get user input until finalized
                                    bgcol = bgcol, buttoncol = buttoncol,
                                    quitopt = quitopt)$myvar
 
-        if (temp$flagconfirm) {
+        if (!temp$backopt) {
           step <- 7
         } else if (maskvars$point_id == "cancel") {
           step <- 10
@@ -209,8 +209,6 @@ while(step < 7) { # gwen: get user input until finalized
       if (!sum(sf::st_geometry_type(myshps$bound) == "POLYGON") ==
           nrow(myshps$bound)) {
         temp$error <- TRUE
-      } else {
-        step <- step + 1
       }
       if (temp$error) {
         temp$msg <- paste("The shapefile", filevars$boundin,
@@ -253,7 +251,7 @@ while(step < 7) { # gwen: get user input until finalized
                                    quitopt = quitopt)$myvar
 
 
-        if (temp$flagconfirm) {
+        if (!temp$backopt) {
           step <- 7
         } else if (maskvars$point_id == "cancel") {
           step <- 10
@@ -327,7 +325,7 @@ while(step < 7) { # gwen: get user input until finalized
         tcltk::tkmessageBox(title = "Distance selections invalid", type = "ok",
                             icon = "error", message = temp$msg)
       } else {
-        if (temp$flagconfirm) {
+        if (!temp$backopt) {
           step <- 7
         } else {
           step <- step + 1
@@ -366,7 +364,7 @@ while(step < 7) { # gwen: get user input until finalized
       } else {
         mysettings$kml <- FALSE # save the kml
       }
-      if (temp$flagconfirm) {
+      if (!temp$backopt) {
         step <- 7
       } else {
         step <- step + 1
@@ -397,7 +395,7 @@ while(step < 7) { # gwen: get user input until finalized
       temp$quit <- TRUE
       step <- 10
     } else {
-      if (temp$flagconfirm) {
+      if (!temp$backopt) {
         step <- 7
       } else {
         step <- step + 1
@@ -445,10 +443,13 @@ if (!mysettings$quit) {
   #---- isolate old points ----
   # for point calculations
   # derive lat/long from geometry, thereby ignoring data entirely
-  myshps$point$orig_lon <- sf::st_coordinates(myshps$point)[, 1]
-  myshps$point$orig_lat <- sf::st_coordinates(myshps$point)[, 2]
+  myshps$point$point_id <- data.frame(myshps$point)[, maskvars$point_id]
+  myshps$bound$bound_id <- data.frame(myshps$bound)[, maskvars$bound_id]
 
   myshps$intersect <- sf::st_intersection(myshps$point, myshps$bound)
+  myshps$intersect$orig_lon <- sf::st_coordinates(myshps$intersect)[, 1]
+  myshps$intersect$orig_lat <- sf::st_coordinates(myshps$intersect)[, 2]
+
   myshps$buffer <- data.frame(ID = numeric())
   myshps$shifted <- data.frame(ID = numeric())
 
@@ -467,22 +468,21 @@ if (!mysettings$quit) {
 
   while (nrow(temp$int) > 0) {
     temp$bufmin <- sf::st_buffer(temp$int, temp$min)
-    temp$bufmin <- dplyr::select(temp$bufmin, ID, bound_id)
+    temp$bufmin <- dplyr::select(temp$bufmin, point_id, bound_id)
     temp$bufmax <- sf::st_buffer(temp$int, temp$max)
-    temp$bufmax <- dplyr::select(temp$bufmax, ID)
+    temp$bufmax <- dplyr::select(temp$bufmax, point_id)
 
     for (i in 1:nrow(temp$int)) {
-
       temp$bufmin1 <- dplyr::slice(temp$bufmin, i)
       temp$bufmax1 <- dplyr::slice(temp$bufmax, i)
-      temp$diff1 <- sf::st_difference(temp$bufmin1, temp$bufmax1)
+      temp$diff1 <- sf::st_difference(temp$bufmax1, temp$bufmin1)
       temp$bound1 <- dplyr::filter(myshps$bound,
                                    bound_id == temp$bufmin1$bound_id[1])
       temp$int1 <- sf::st_intersection(temp$bound1, temp$diff1)
-      if (nrow(t5) > 0) {
+      if (nrow(temp$int1) > 0) {
         temp$shift1 <- sf::st_as_sf(sf::st_sample(temp$int1, 1),
                                     crs = sf::st_crs(temp$bufmin1))
-        temp$shift1$ID <- temp$bufmin1$ID
+        temp$shift1$point_id <- temp$bufmin1$point_id
         temp$shift1$bound_id <- temp$bufmin1$bound_id
         temp$shift1$mask_lon <- sf::st_coordinates(temp$shift1)[,1]
         temp$shift1$mask_lat <- sf::st_coordinates(temp$shift1)[,2]
@@ -498,7 +498,7 @@ if (!mysettings$quit) {
     }
 
     temp$int <- dplyr::filter(myshps$intersect,
-                              !ID %in% myshps$shifted$ID)
+                              !point_id %in% myshps$shifted$point_id)
     temp$max <- temp$min
     temp$min <- temp$min / 2
     temp$iter <- temp$iter + 1
@@ -508,90 +508,30 @@ if (!mysettings$quit) {
 
 
   # join intersect and shifted datasets
-  temp <- data.frame(myshps$shifted)[, c("ID", "bound_id", "long", "lat")]
-  myshps$point <- dplyr::full_join(myshps$point, temp, by = "ID")
+  vars <- c("point_id", "bound_id", "mask_lon", "mask_lat", "flag")
+  temp <- data.frame(myshps$shifted)[, vars]
+  myshps$point <- dplyr::full_join(myshps$point, temp, by = "point_id")
 
 
 
 
 
-  # testing with old object names - obsolete
-  # plot(t4$geometry, border = "green")
-  # plot(t2$geometry, border = "blue", add = TRUE)
-  # plot(t1$geometry, border = "red", add = TRUE)
-  # plot(t5$geometry, col = "yellow", border = "transparent", add = TRUE)
-  # plot(sf::st_geometry(t6), col = "black", add = TRUE, pch = 20)
+  # plot(sf::st_geometry(myshps$point), col = "blue", pch = 20)
+  # plot(sf::st_geometry(myshps$shifted), col = "red", add = TRUE, pch = 20)
 
-  # warn user if minimum or maximum have been changed - add to log
-  # created flag variable to try bypassing this
-      flag$log <- ""
-      if (flag$max | flag$min) {
-        flag$log <- paste("The geomasker had difficulty moving point", j,
-                          "in area", i, ". For this point,")
-      }
-      if (flag$max & flag$min) {
-        flag$log <- paste(flag$log, "minimum and maximum distances",
-                          "were changed.")
-      } else if (flag$max) {
-        flag$log <- paste(flag$log, "maximum distances were changed.")
-      } else if (flag$min) {
-        flag$log <- paste(flag$log, "minimum distances were changed.")
-      }
+  # created flag variable to bypass warnings here
 
-      if (!flag$log == "") {
-        maskvars$log <- paste0(maskvars$log, flag$log, " \n")
-      }
-     # cycle through all points
-
-  #---- step ?: plot original points ----
-  # Abby: program rewritten to this point
-  #       rewrite and/or reorder everything below this point
+  #---- step ?: plot points ----
   # add progress bar - plot original points
-# check if plotGMcompare has been updated to sf
 
   myplots <- list()
-  myplots$original <- plotGMcompare(bound = myshps$bound, point = myshps$point,
-                                    maskvars = maskvars)
+  myplots$all <- plotGMcompare(bound = myshps$bound, original = myshps$point,
+                               shifted = myshps$shifted, maskvars = maskvars)
 
+  mysettings$endtime <- Sys.time()
 
-  pts$coords_new <- data.frame(x = pts$x, y = pts$y)
-
-  # add my minimum/maximum distances
-  myshps$new <- cbind(data.frame(myshps$point),
-                      min_dist = pts$min,
-                      max_dist = pts$max)
-
-  sp::coordinates(myshps$new) <- pts$coords_new
-  # assign original projection to new points
-  sp::proj4string(myshps$new) <- sp::proj4string(myshps$point)
-
-  #---- step ?: plot new points ----
-  # need to create new points layer first
-
-  myplots$new <- plotGMcompare(bound = myshps$bound, point = myshps$new,
-                               maskvars = maskvars)
-
-
-  #---- comparison plot showing both points sets at once? ----
-  # will need to revise plotGMcompare
-
-
-
-
-
-#dev.new()
-#use points to add new data to same plot
-points(mydata, pch=24, col="black",bg="blue")
-  #produces green triangles outlined in black
-title("Points before and after moving")
-legend(x="topleft",legend=c("before","after"),
-       horiz=FALSE,pch=c(21,24),col=c("black","black"),pt.bg=c("red","blue"))
-
-endtime<-Sys.time()
-
-#change names of old coordinates
-names(mydata)[names(mydata)=="coords.x1"]<-"prev_x" #change the name of the old coordinates
-names(mydata)[names(mydata)=="coords.x2"]<-"prev_y" #change the name of the old coordinates
+  # Abby: program rewritten to this point
+  #       rewrite and/or reorder everything below this point
 
 #write  out shapefile using OGR
 #output file doesn't seem to have projection
