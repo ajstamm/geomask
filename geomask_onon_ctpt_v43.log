@@ -1,0 +1,29 @@
+NYSDOH Geomasking Tool Log 
+  Version & date: 1.4.0 2023-04-17 
+  Date run: 19471 
+  Time tool took to run: 11.97 minutes 
+
+
+Input file:           P:/Sections/EHS/Staff/ajs11/R/pkg/geomask/testing/onondaga_landmarkpoints 
+  Projection:         +proj=longlat +datum=NAD83 +no_defs 
+  Field names:        STATEFP ANSICODE POINTID FULLNAME MTFCC STATEFP10 COUNTYFP10 TRACTCE10 BLKGRPCE10 GEOID10 NAMELSAD10 MTFCC10 FUNCSTAT10 ALAND10 AWATER10 INTPTLAT10 INTPTLON10 COUNTYFP STATEFP.1 geometry 
+  Identifier:         POINTID 
+  Boundary file:      P:/Sections/EHS/Staff/ajs11/R/pkg/geomask/testing/onondaga_blockgroups 
+  Boundary variable:  GEOID10 
+Output file: P:/Sections/EHS/Staff/ajs11/R/tools/GATtest/testresults/geomask_onon_ctpt_v43
+
+Masking settings:     
+  Minimum distance:   1000 
+  Minimum distance:   5000 
+  Unit type  :        meters
+
+  The shapefiles failed to save. 
+
+  Maps:                              geomask_onon_ctpt_v43plots.pdf 
+  Log file:                          geomask_onon_ctpt_v43.log 
+  R settings file:                   geomask_onon_ctpt_v43settings.Rdata
+
+  Maps:                              geomask_onon_ctpt_v43plots.pdf 
+  Log file:                          geomask_onon_ctpt_v43.log 
+  R settings file:                   geomask_onon_ctpt_v43settings.Rdata 
+  You chose not to write a KML file.

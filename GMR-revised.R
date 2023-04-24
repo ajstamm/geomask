@@ -59,7 +59,7 @@ bgcol <- "thistle1"
 buttoncol <- "plum2"
 quitopt <- "Quit Geomasker"
 settings <- NULL
-settingsfil <- NULL
+settingsfile <- NULL
 
 # for testing; read in settings file
 # later, set up menu confirmation like in GAT
@@ -436,87 +436,15 @@ while(step < 7) { # gwen: get user input until finalized
 #---- automatic processing ----
 # at this point, step = 7
 if (!mysettings$quit) {
+  # calculate points ----
   # Abby: need to add progress bar steps
   #       do this later after full program rewritten
 
   set.seed(mysettings$starttime)
-  #---- isolate old points ----
-  # for point calculations
-  # derive lat/long from geometry, thereby ignoring data entirely
-  myshps$point$point_id <- data.frame(myshps$point)[, maskvars$point_id]
-  myshps$bound$bound_id <- data.frame(myshps$bound)[, maskvars$bound_id]
 
-  myshps$intersect <- sf::st_intersection(myshps$point, myshps$bound)
-  myshps$intersect$orig_lon <- sf::st_coordinates(myshps$intersect)[, 1]
-  myshps$intersect$orig_lat <- sf::st_coordinates(myshps$intersect)[, 2]
-
-  myshps$buffer <- data.frame(ID = numeric())
-  myshps$shifted <- data.frame(ID = numeric())
-
-  # ---- calculate new points ----
-  # create temp max/min variables
-  # create flag variable for number max/min iterations
-  # if buffer fails, min = min/2 & max = min, reiterate if needed
-  # subset remaining without valid buffer
-  # will need to rerun buffer for just those
-  # I'd love to drop the loop, but for now it works
-  # possibly create buffers for each point, then recreate on the fly if needed?
-  temp <- list(max = maskvars$max,
-               min = maskvars$min,
-               int = myshps$intersect,
-               iter = 0)
-
-  while (nrow(temp$int) > 0) {
-    temp$bufmin <- sf::st_buffer(temp$int, temp$min)
-    temp$bufmin <- dplyr::select(temp$bufmin, point_id, bound_id)
-    temp$bufmax <- sf::st_buffer(temp$int, temp$max)
-    temp$bufmax <- dplyr::select(temp$bufmax, point_id)
-
-    for (i in 1:nrow(temp$int)) {
-      temp$bufmin1 <- dplyr::slice(temp$bufmin, i)
-      temp$bufmax1 <- dplyr::slice(temp$bufmax, i)
-      temp$diff1 <- sf::st_difference(temp$bufmax1, temp$bufmin1)
-      temp$bound1 <- dplyr::filter(myshps$bound,
-                                   bound_id == temp$bufmin1$bound_id[1])
-      temp$int1 <- sf::st_intersection(temp$bound1, temp$diff1)
-      if (nrow(temp$int1) > 0) {
-        temp$shift1 <- sf::st_as_sf(sf::st_sample(temp$int1, 1),
-                                    crs = sf::st_crs(temp$bufmin1))
-        temp$shift1$point_id <- temp$bufmin1$point_id
-        temp$shift1$bound_id <- temp$bufmin1$bound_id
-        temp$shift1$mask_lon <- sf::st_coordinates(temp$shift1)[,1]
-        temp$shift1$mask_lat <- sf::st_coordinates(temp$shift1)[,2]
-        temp$shift1$flag <- temp$iter
-        if (nrow(myshps$buffer) == 0) {
-          myshps$buffer <- temp$int1
-          myshps$shifted <- temp$shift1
-        } else {
-          myshps$buffer <- dplyr::bind_rows(myshps$buffer, temp$int1)
-          myshps$shifted <- dplyr::bind_rows(myshps$shifted, temp$shift1)
-        }
-      }
-    }
-
-    temp$int <- dplyr::filter(myshps$intersect,
-                              !point_id %in% myshps$shifted$point_id)
-    temp$max <- temp$min
-    temp$min <- temp$min / 2
-    temp$iter <- temp$iter + 1
-  }
-
-  rm(temp)
+  myshps <- calculateGMpoints(myshps = myshps, maskvars = maskvars)
 
 
-  # join intersect and shifted datasets
-  vars <- c("point_id", "bound_id", "mask_lon", "mask_lat", "flag")
-  temp <- data.frame(myshps$shifted)[, vars]
-  myshps$old_full <- dplyr::full_join(myshps$intersect, temp,
-                                      by = c("point_id", "bound_id"))
-  vars <- names(myshps$intersect)
-  vars <- vars[1:(length(vars)-3)]
-  temp <- data.frame(myshps$intersect)[, c(vars, "orig_lon", "orig_lat")]
-  myshps$new_full <- dplyr::full_join(myshps$shifted, temp,
-                                      by = c("point_id", "bound_id"))
 
   # plot(sf::st_geometry(myshps$point), col = "blue", pch = 20)
   # plot(sf::st_geometry(myshps$shifted), col = "red", add = TRUE, pch = 20)
@@ -524,20 +452,19 @@ if (!mysettings$quit) {
   # created flag variable to bypass warnings here
 
   #---- step ?: plot points ----
-  # add progress bar - plot original points
+  # add progress bar
 
-  myplots <- list()
-  myplots$all <- plotGMcompare(bound = myshps$bound, original = myshps$point,
-                               shifted = myshps$shifted, maskvars = maskvars)
+  myplot <- plotGMcompare(bound = myshps$bound, original = myshps$point,
+                          shifted = myshps$shifted, maskvars = maskvars)
 
 
   # save files ----
     # save shapefile(s) ----
   # write resulting shapefile(s)
-  temp <- list(oldfile = paste(filevars$fileout, "old", sep = "_"))
-  sf::write_sf(myshps$old_full, dsn = filevars$boundpath,
+  temp$oldfile = paste(filevars$fileout, "old", sep = "_")
+  sf::write_sf(myshps$old_full, dsn = filevars$pathout,
                layer = temp$oldfile, driver = "ESRI shapefile")
-  sf::write_sf(myshps$new_full, dsn = filevars$boundpath,
+  sf::write_sf(myshps$new_full, dsn = filevars$pathout,
                layer = filevars$fileout, driver = "ESRI shapefile")
 
     # save kml ----
@@ -554,12 +481,9 @@ if (!mysettings$quit) {
     # save plot(s) ----
   grDevices::pdf(paste0(filevars$userout, "plots.pdf"), onefile=TRUE,
                  width = 10, height = 7)
-  for (myplot in myplots) {
-    if (is(myplot, "recordedplot")) grDevices::replayPlot(myplot)
-  } # only saves plots that exist
+  grDevices::replayPlot(myplot)
   grDevices::dev.off() # need to close pdf file
 
-  rm(myplots)
 
 
     # save settingsfile ----
