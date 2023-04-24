@@ -47,10 +47,8 @@ devtools::load_all("R")
 
 #---- settings ----
 # add ways to define and include point ID and boundary ID by name
-mysettings <- list(version = "1.4.0",
-                   pkgdate = "2023-04-17",
-                   # packageDescription("geomask")$Version,
-                   # packageDescription("geomask")$Date,
+mysettings <- list(version = "1.4.0", # packageDescription("geomask")$Version,
+                   pkgdate = "2023-04-17", # packageDescription("geomask")$Date,
                    starttime = Sys.time()) # needed for the log
 
 # pre-load lists
@@ -61,6 +59,7 @@ bgcol <- "thistle1"
 buttoncol <- "plum2"
 quitopt <- "Quit Geomasker"
 settings <- NULL
+settingsfil <- NULL
 
 # for testing; read in settings file
 # later, set up menu confirmation like in GAT
@@ -425,13 +424,14 @@ while(step < 7) { # gwen: get user input until finalized
       step <- 7
       temp$quit <- TRUE
     } else if (grepl("[0-9]", temp$cancel)) {
+      temp$backopt <- FALSE
       step <- as.numeric(gsub("[^0-9]", "", temp$cancel))
     }
 
   }
   mysettings$quit <- temp$quit
 } # end while step
-rm(temp)
+# rm(temp)
 
 #---- automatic processing ----
 # at this point, step = 7
@@ -510,11 +510,13 @@ if (!mysettings$quit) {
   # join intersect and shifted datasets
   vars <- c("point_id", "bound_id", "mask_lon", "mask_lat", "flag")
   temp <- data.frame(myshps$shifted)[, vars]
-  myshps$point <- dplyr::full_join(myshps$point, temp, by = "point_id")
-
-
-
-
+  myshps$old_full <- dplyr::full_join(myshps$intersect, temp,
+                                      by = c("point_id", "bound_id"))
+  vars <- names(myshps$intersect)
+  vars <- vars[1:(length(vars)-3)]
+  temp <- data.frame(myshps$intersect)[, c(vars, "orig_lon", "orig_lat")]
+  myshps$new_full <- dplyr::full_join(myshps$shifted, temp,
+                                      by = c("point_id", "bound_id"))
 
   # plot(sf::st_geometry(myshps$point), col = "blue", pch = 20)
   # plot(sf::st_geometry(myshps$shifted), col = "red", add = TRUE, pch = 20)
@@ -528,54 +530,57 @@ if (!mysettings$quit) {
   myplots$all <- plotGMcompare(bound = myshps$bound, original = myshps$point,
                                shifted = myshps$shifted, maskvars = maskvars)
 
-  mysettings$endtime <- Sys.time()
+
+  # save files ----
+    # save shapefile(s) ----
+  # write resulting shapefile(s)
+  temp <- list(oldfile = paste(filevars$fileout, "old", sep = "_"))
+  sf::write_sf(myshps$old_full, dsn = filevars$boundpath,
+               layer = temp$oldfile, driver = "ESRI shapefile")
+  sf::write_sf(myshps$new_full, dsn = filevars$boundpath,
+               layer = filevars$fileout, driver = "ESRI shapefile")
+
+    # save kml ----
+  # write kml if desired
+  if (mysettings$kml) { # now includes descriptions
+    step <- step + 1
+    pb$label = "Writing the KML file."
+    tcltk::setTkProgressBar(tpb, value = step, title = pb$title, label = pb$label)
+
+    gatpkg::writeGATkml(myshp = myshps$newpoint, filename = filevars$fileout,
+                        filepath = filevars$pathout, myidvar = point_id)
+  }
+
+    # save plot(s) ----
+  grDevices::pdf(paste0(filevars$userout, "plots.pdf"), onefile=TRUE,
+                 width = 10, height = 7)
+  for (myplot in myplots) {
+    if (is(myplot, "recordedplot")) grDevices::replayPlot(myplot)
+  } # only saves plots that exist
+  grDevices::dev.off() # need to close pdf file
+
+  rm(myplots)
+
+
+    # save settingsfile ----
+  save(file = paste0(filevars$userout, "settings.Rdata"),
+       list = c("filevars", "maskvars", "mysettings"))
+
 
   # Abby: program rewritten to this point
   #       rewrite and/or reorder everything below this point
 
-#write  out shapefile using OGR
-#output file doesn't seem to have projection
-writeOGR(mydata, userpathout, userfileout, driver="ESRI Shapefile",verbose=TRUE,overwrite_layer=TRUE) #seems fast
+    # save log ----
 
-#---- step ?: plot new points ----
-# need to create new points layer first
+  mysettings$endtime <- Sys.time()
 
-myplots$new <- plotGMcompare(bound = myshps$bound, point = myshps$point,
-                             maskvars = maskvars)
-
-# notes: order of steps
-# calculate new points
-# create layer of new points - note units in log
-# plot original points
-# plot new points (overlaid? - 1px)
-# save plots
-# save shapefiles
-# save kml
-# save log
-
-maskvars$log
+  writeGMlog(area = myshps$point, maskvars = maskvars, filevars = filevars,
+             mysettings = mysettings, settingsfile = settingsfile)
 
 
 
-# save kml ----
-if (maskvars$kml == TRUE) { # now includes descriptions
-  step <- step + 1
-  pb$label = "Writing the KML file."
-  tcltk::setTkProgressBar(tpb, value = step, title = pb$title, label = pb$label)
 
-  # make sure this works
-  if (mysettings$kml) {
-    # need to define GM_id at some point as 1:nrow(x) or rownames(x)
-    gatpkg::writeGATkml(myshp = myshps$newpoint, filename = filevars$fileout,
-                        filepath = filevars$pathout, myidvar = GM_id)
-  }
-}
 
-# save shapefile (incomplete) ----
-# convert below to shapefile output
-#might be able to specify NameField, DescriptionField, AltitudeMode
-#NameField=mydata@data[1]
-writeOGR(mydata, userpathout, userfileout, driver="MapInfo File",verbose=TRUE,overwrite_layer=TRUE) #seems fast
 
 
 # write log (incomplete) ----
@@ -587,12 +592,12 @@ writeOGR(mydata, userpathout, userfileout, driver="MapInfo File",verbose=TRUE,ov
 #(8 items)
 ################################################################################
 #begin log file
-logfile<-paste(userpathout,paste(userfileout,"txt",sep="."),sep="/")
+logfile<-paste(filevars$userout, "txt", sep=".")
 
 setStatusBar(paste("NYSDOH Geomasking Tool: Writing log file ",logfile))
 
-logtext<-"NYSDOH Geomasking Tool log"
-write("",file=logfile,ncolumns=length(logtext),append=TRUE)
+logtext <- "NYSDOH Geomasking Tool log"
+write("", file = logfile, ncolumns = length(logtext), append = TRUE)
 #logtext<-c("The current date is ", format(Sys.Date()))
 #write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
 logtext<-c("The current date and time are ", format(Sys.time()))
