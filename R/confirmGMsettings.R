@@ -102,8 +102,8 @@ confirmGMsettings <- function(maskvars, filevars, savekml = FALSE, step = 0,
   myenv <- new.env()
   # button functions and layout
   onHelp <- function() {
-    showGAThelp(help = hlp, helptitle = helppage, helppage = helppage,
-                step = step)
+    gatpkg::showGAThelp(help = hlp, helptitle = helppage, helppage = helppage,
+                        step = step)
   }
   onOk <- function() {
     Rbval <- tcltk::tclvalue(stepvar)

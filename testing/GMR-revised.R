@@ -40,6 +40,11 @@
 #------------------------------------------------------------------------------
 
 
+devtools::load_all("R")
+
+runGMprogram(bgcol = "thistle1", buttoncol = "plum3", settings = NULL)
+
+
 #---- libraries ----
 devtools::load_all("R")
 # confirmed required: tcltk, gatpkg, sf
@@ -70,7 +75,6 @@ settingsfile <- NULL
 if (!is.null(settings)) {
   load(settings)
   step <- 6
-  temp$flagconfirm <- TRUE
   filevars$userout <- paste0(filevars$userout, "_2")
   filevars$fileout <- paste0(filevars$fileout, "_2")
   myshps$point <- sf::st_read(dsn = filevars$pointpath,
@@ -166,11 +170,11 @@ while(step < 7) { # gwen: get user input until finalized
                                    bgcol = bgcol, buttoncol = buttoncol,
                                    quitopt = quitopt)$myvar
 
-        if (!temp$backopt) {
-          step <- 7
-        } else if (maskvars$point_id == "cancel") {
+        if (maskvars$point_id == "cancel") {
           step <- 10
           temp$quit <- TRUE
+        } else if (!temp$backopt) {
+          step <- 7
         } else {
           step <- step + 1
         }
@@ -250,11 +254,11 @@ while(step < 7) { # gwen: get user input until finalized
                                    quitopt = quitopt)$myvar
 
 
-        if (!temp$backopt) {
-          step <- 7
-        } else if (maskvars$point_id == "cancel") {
+        if (maskvars$point_id == "cancel") {
           step <- 10
           temp$quit <- TRUE
+        } else if (!temp$backopt) {
+          step <- 7
         } else {
           step <- step + 1
         }
@@ -393,12 +397,10 @@ while(step < 7) { # gwen: get user input until finalized
     if (filevars$fileout == "cancel") {
       temp$quit <- TRUE
       step <- 10
+    } else if (!temp$backopt) {
+      step <- 7
     } else {
-      if (!temp$backopt) {
-        step <- 7
-      } else {
-        step <- step + 1
-      }
+      step <- step + 1
     }
   }
 
@@ -437,8 +439,10 @@ while(step < 7) { # gwen: get user input until finalized
 # at this point, step = 7
 if (!mysettings$quit) {
   # calculate points ----
-  # Abby: need to add progress bar steps
-  #       do this later after full program rewritten
+  pb <- list(title = "NYSDOH Geomask Tool: shift points",
+             label = "Shifting points within their boundaries.")
+  tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
+                          label = pb$label)
 
   set.seed(mysettings$starttime)
 
@@ -451,14 +455,21 @@ if (!mysettings$quit) {
 
   # created flag variable to bypass warnings here
 
-  #---- step ?: plot points ----
-  # add progress bar
+  # plot points ----
+  pb <- list(title = "NYSDOH Geomask Tool: plot points",
+             label = "Plotting the original and shifted points.")
+  tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
+                          label = pb$label)
 
   myplot <- plotGMcompare(bound = myshps$bound, original = myshps$point,
                           shifted = myshps$shifted, maskvars = maskvars)
 
 
   # save files ----
+  pb <- list(title = "NYSDOH Geomask Tool: save files",
+             label = "Saving your files.")
+  tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
+                          label = pb$label)
     # save shapefile(s) ----
   # write resulting shapefile(s)
   temp$oldfile = paste(filevars$fileout, "old", sep = "_")
@@ -466,17 +477,6 @@ if (!mysettings$quit) {
                layer = temp$oldfile, driver = "ESRI shapefile")
   sf::write_sf(myshps$new_full, dsn = filevars$pathout,
                layer = filevars$fileout, driver = "ESRI shapefile")
-
-    # save kml ----
-  # write kml if desired
-  if (mysettings$kml) { # now includes descriptions
-    step <- step + 1
-    pb$label = "Writing the KML file."
-    tcltk::setTkProgressBar(tpb, value = step, title = pb$title, label = pb$label)
-
-    gatpkg::writeGATkml(myshp = myshps$newpoint, filename = filevars$fileout,
-                        filepath = filevars$pathout, myidvar = point_id)
-  }
 
     # save plot(s) ----
   grDevices::pdf(paste0(filevars$userout, "plots.pdf"), onefile=TRUE,
@@ -491,82 +491,60 @@ if (!mysettings$quit) {
        list = c("filevars", "maskvars", "mysettings"))
 
 
-  # Abby: program rewritten to this point
-  #       rewrite and/or reorder everything below this point
+    # save kml ----
+  # write kml if desired
+  if (mysettings$kml) { # now includes descriptions
+    gatpkg::writeGATkml(myshp = myshps$new_full, filename = filevars$fileout,
+                        filepath = filevars$pathout, myidvar = "point_id")
+  }
 
     # save log ----
 
   mysettings$endtime <- Sys.time()
+  mysettings$exists <- file.exists(paste0(filevars$userout, ".shp"))
 
   writeGMlog(area = myshps$point, maskvars = maskvars, filevars = filevars,
              mysettings = mysettings, settingsfile = settingsfile)
 
 
+  # print message ----
 
 
+  if (mysettings$exists) {
+    msg <- paste0("The Geoomasker is finished. Your files were saved to ",
+                  filevars$pathout,
+                  ". \nPlease see the log file for more details.")
+    tcltk::tkmessageBox(title = "Program finished", type = "ok",
+                        icon = "info", message = msg)
 
+    msg <- paste0("\n\nThe following files have been written to the folder \n",
+                  filevars$pathout, ": \n  ",
+                  filevars$fileout, ".dbf \n  ",
+                  filevars$fileout, ".prj \n  ",
+                  filevars$fileout, ".shp \n  ",
+                  filevars$fileout, ".shx \n  ",
+                  filevars$fileout, "_old.dbf \n  ",
+                  filevars$fileout, "_old.prj \n  ",
+                  filevars$fileout, "_old.shp \n  ",
+                  filevars$fileout, "_old.shx \n  ",
+                  filevars$fileout, "plots.pdf \n  ",
+                  filevars$fileout, ".log \n  ",
+                  filevars$fileout, "settings.Rdata \n  ")
 
+    if (mysettings$kml==TRUE) {
+      msg <- paste0(msg,
+                    filevars$fileout, ".kml \n  ",
+                    filevars$fileout, ".kmz \n")
+    }
+    msg <- paste0(msg, "\nSee the log file for more details.")
 
-# write log (incomplete) ----
-# shift log to function
-
-################################################################################
-#create a log file
-#should contain input files, output file, min and max distances or sources (and units), date, run time
-#(8 items)
-################################################################################
-#begin log file
-logfile<-paste(filevars$userout, "txt", sep=".")
-
-setStatusBar(paste("NYSDOH Geomasking Tool: Writing log file ",logfile))
-
-logtext <- "NYSDOH Geomasking Tool log"
-write("", file = logfile, ncolumns = length(logtext), append = TRUE)
-#logtext<-c("The current date is ", format(Sys.Date()))
-#write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
-logtext<-c("The current date and time are ", format(Sys.time()))
-write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
-
-logtext<-c("The input point file is: ",userfile)
-write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
-logtext<-c("Number of points moved: ",length(mydata@data[,1]))
-write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
-
-logtext<-c("The input boundary file is: ",userfileb)
-write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
-write("",file=logfile,ncolumns=length(logtext),append=TRUE)
-
-if(userdistc[2]=="NONE"){
-logtext=c("Minimum distance requested was ",userdistc[1])
-}else{logtext=c("Minimum distance was obtained from field ",userdistc[2],userdistc[5])}
-write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
-
-if(userdistc[4]=="NONE"){#be sure to include units=userdistc[5]
-logtext=c("Maximum distance requested was ",userdistc[3],userdistc[5])
-}else{
-logtext=c("Maximum distance was obtained from field ",userdistc[4])}
-write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
-
-logtext<-c("The time this program took to move the points: ",endtime-starttime)
-write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
-
-logtext<-c("The output file(s): ",userout)
-write(logtext,file=logfile,ncolumns=length(logtext),append=TRUE)
-
-#end code to create log file
-##############################################################################
-
-setStatusBar(paste("NYSDOH Geomask Tool: find your results in: ",userpathout))
-
-
-
-#---- save user settings ----
-# for testing; move to end later
-# save relevant objects
-save(file = paste0(filevars$userout, "_settings.Rdata"),
-     list = c("filevars", "maskvars", "mysettings"))
-
-
+    message(msg)
+  } else {
+    # the shapefile failed to write
+    msg <- "Something went wrong. Your shapefiles were not saved."
+    tcltk::tkmessageBox(title = "Shapefile save failed", type = "ok",
+                        icon = "error", message = msg)
+  }
 
 
 

@@ -91,11 +91,11 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
   newvars <- c("point_id", "bound_id", "orig_lon", "orig_lat",
                "mask_lon", "mask_lat", "flag")
   vars <- vars[!vars %in% newvars]
-  newvars <- ""
+  oldvars <- ""
   for (i in 1:(length(vars)-3)) {
-    newvars <- paste0(newvars, vars[i], ", ")
+    oldvars <- paste0(oldvars, vars[i], ", ")
     if (i %% 6 == 0) {
-      newvars <- paste0(newvars, "\n", paste(rep(" ", 22), collapse = ""))
+      oldvars <- paste0(oldvars, "\n", paste(rep(" ", 22), collapse = ""))
     }
   }
 

@@ -18,20 +18,6 @@
 #' @param closemap  Boolean denoting whether to close the map window after
 #'                  the map is drawn and saved.
 #'
-#' @examples
-#' # define masking variables
-#' maskvars <- list(
-#'   unit = "meters", # distance unit
-#'   min = 100,        # minimum distance
-#'   max = 1000        # maximum distance
-#' )
-#'
-#' # draw the map
-#' plotGATcompare(
-#'   bound = atown,
-#'   point = apoint,
-#'   maskvars = maskvars
-#' )
 #'
 #' @export
 
@@ -43,8 +29,8 @@ plotGMcompare <- function(bound, original = NULL, shifted = NULL, maskvars,
                           closemap = FALSE) {
 
   # set map size
-  dev.new(noRStudioGD = TRUE, res = 1200, width = 20, height = 14)
-  dev.control('enable') # enable display list
+  grDevices::dev.new(noRStudioGD = TRUE, res = 1200, width = 20, height = 14)
+  grDevices::dev.control('enable') # enable display list
   graphics::par(mar = c(3.5,0,2,0), mgp = c(0,0,0)) # bottom, left, top, right
 
   # plot shapefiles ----
@@ -84,15 +70,15 @@ plotGMcompare <- function(bound, original = NULL, shifted = NULL, maskvars,
   }
 
   if ("point" %in% mytype) {
-    legend("topleft", legend = mylbl, fill = "White", bty = "n", cex = 1,
+    graphics::legend("topleft", legend = mylbl, fill = "White", bty = "n", cex = 1,
            border = c("green", rep("white", length(mycol) - 1)), inset = 0,
            y.intersp = 1.25)
-    legend("topleft", legend = rep("", length(mylbl)), pch = 20, cex = 1,
+    graphics::legend("topleft", legend = rep("", length(mylbl)), pch = 20, cex = 1,
            col = c("white", mycol[!mycol == "green"]), inset = 0, bty = "n",
            y.intersp = 1.25)
 
   } else {
-    legend("topleft", legend = mylbl, fill = "White", bty = "n", cex = 1,
+    graphics::legend("topleft", legend = mylbl, fill = "White", bty = "n", cex = 1,
            border = mycol, inset = 0, y.intersp = 1.25)
 
   }
@@ -105,7 +91,7 @@ plotGMcompare <- function(bound, original = NULL, shifted = NULL, maskvars,
   mytitle <- "Map showing ... (need to code this)"
   mysub <- paste("Geomasking distance:", numformat(maskvars$min), "to",
                  numformat(maskvars$max), maskvars$unit)
-  title(mytitle, sub = mysub, cex.main = 2)
+  graphics::title(mytitle, sub = mysub, cex.main = 2)
 
   # draw arrow and scale bar ####
   # if (requireNamespace("prettymapr", quietly = TRUE)) {
@@ -121,11 +107,11 @@ plotGMcompare <- function(bound, original = NULL, shifted = NULL, maskvars,
   # }
 
   # save map ####
-  map <- recordPlot()
+  map <- grDevices::recordPlot()
  # default bottom, left, top, right
   graphics::par(mar=c(5,4,4,2)+.1, mgp = c(3, 1, 0))
   if (closemap) {
-    dev.off()
+    grDevices::dev.off()
   }
   return(map)
 }

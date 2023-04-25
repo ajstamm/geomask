@@ -105,7 +105,7 @@ selectGMdistances <- function(step = 3, min = "1,000", max = "10,000",
     assign("mylist", list(unit = "back", min = 0, max = 0), envir=myenv)
   }
   onHelp <- function() {
-    showGAThelp(help = hlp, helptitle = "distance settings",
+    gatpkg::showGAThelp(help = hlp, helptitle = "distance settings",
                 helppage = helppage, step = step)
   }
 

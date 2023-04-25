@@ -31,16 +31,18 @@ calculateGMpoints <- function(myshps, maskvars) {
 
   while (nrow(temp$int) > 0) {
     temp$bufmin <- sf::st_buffer(temp$int, temp$min)
-    temp$bufmin <- dplyr::select(temp$bufmin, point_id, bound_id)
+    temp$bufmin <- dplyr::select(temp$bufmin, !!dplyr::sym("point_id"),
+                                 !!dplyr::sym("bound_id"))
     temp$bufmax <- sf::st_buffer(temp$int, temp$max)
-    temp$bufmax <- dplyr::select(temp$bufmax, point_id)
+    temp$bufmax <- dplyr::select(temp$bufmax, !!dplyr::sym("bound_id"))
 
     for (i in 1:nrow(temp$int)) {
       temp$bufmin1 <- dplyr::slice(temp$bufmin, i)
       temp$bufmax1 <- dplyr::slice(temp$bufmax, i)
       temp$diff1 <- sf::st_difference(temp$bufmax1, temp$bufmin1)
       temp$bound1 <- dplyr::filter(myshps$bound,
-                                   bound_id == temp$bufmin1$bound_id[1])
+                                   !!dplyr::sym("bound_id") ==
+                                     temp$bufmin1$bound_id[1])
       temp$int1 <- sf::st_intersection(temp$bound1, temp$diff1)
       if (nrow(temp$int1) > 0) {
         temp$shift1 <- sf::st_as_sf(sf::st_sample(temp$int1, 1),
@@ -61,7 +63,8 @@ calculateGMpoints <- function(myshps, maskvars) {
     }
 
     temp$int <- dplyr::filter(myshps$intersect,
-                              !point_id %in% myshps$shifted$point_id)
+                              !(!!dplyr::sym("point_id") %in%
+                                  myshps$shifted$point_id))
     temp$max <- temp$min
     temp$min <- temp$min / 2
     temp$iter <- temp$iter + 1
