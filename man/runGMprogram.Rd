@@ -17,3 +17,11 @@ Geomasker.}
 \description{
 Run the geomasker
 }
+\examples{
+
+if (interactive()) {
+# this code will run the full program
+runGMprogram()
+}
+
+}

@@ -1,4 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^testing$
-^README.md$
+^README\.md$
+^.*\.log$
+^News\.md$
+^archive$

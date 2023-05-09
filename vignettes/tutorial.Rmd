@@ -1,0 +1,471 @@
+---
+title: "Tutorial"
+author: "Abigail Stamm"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+This vignette is designed for a user with no experience in R who just wants to run the default version of the geomasking tool, or geomasker. This manual breaks down the different parts of the program and describes what to do and what to expect using 2010 Census shapefiles for Onondaga County in New York State, which are embedded in the package. These shapefiles will be used in this manual. 
+
+*Note: For users who wish to modify the geomasker, developer options have been written into several of the package functions. Check the functions' help pages (linked from function names) and the [Technical Notes](../doc/tech_notes.html) for more information. Users interested only in running the geomasker can ignore these links.*
+
+# Objective
+
+This tutorial will walk you through the following activities. You will start with a shapefile of landmark points in Onondaga County in two New York State. You will enter settings to shift these points within their Census tracts.
+
+The results will be displayed in the log and as a map in a PDF. The new points will be saved as an ESRI shapefile and, if desired, as a Google Earth KML file so that you can import them to your preferred GIS application.
+
+
+# Running the geomasker
+
+Please note that R is case sensitive. The provided code is designed to be copy-pasted, but if you prefer to type it yourself, be aware of capitalization.
+
+
+> From this point onward needs revision
+
+> Do I want to embed shapefiles as with GAT?
+> Or have the user create them in the working directory using tigris?
+> If embedded, I will need to revisit help page examples.
+
+
+To follow this vignette, you can use the embedded shapefiles in this package. The filepath after the command below points to the folder in your package install that contains these shapefiles. When prompted to select a shapefile, navigate to this filepath.
+
+> `paste0(tools::getVignetteInfo("gatpkg", all = TRUE)[1, "Dir"], "/extdata/")`
+
+Alternatively, you can use your file manager's search feature to locate the file "hftown.shp".
+
+To run GAT, you only need one line of code:
+
+> `gatpkg::runGATprogram()`
+
+The steps below will walk you through the dialogs created by GAT and describe the types of input expected using the embedded shapefiles. 
+
+GAT starts by creating initial variables and displaying a progress bar that will continually update as it runs. GAT's processes occur in this order:
+
+* request information in 11 user input steps
+* process and aggregate the shapefile
+* draw 4 to 7 maps
+* save 11 or 12 files
+
+# User input section
+
+This is the interactive portion of GAT. The steps below will walk you through what to expect from GAT. If any portion of this section is cancelled, GAT will quit. 
+
+GAT starts with this progress bar, which will update as GAT proceeds:
+
+```{r pbinitial, fig.cap = 'Initial Progress Bar', echo = FALSE, fig.alt = 'Initial Progress Bar'}
+knitr::include_graphics("images/pb_start.png")
+```
+
+Do not close the progress bar before GAT finishes running. If you do, GAT will crash with this error:
+
+> warning('Error in structure(.External(.C_dotTclObjv, objv), class = "tclObj") :  
+>   [tcl] bad window path name ".113".')
+
+## Step 1. Request aggregation shapefile
+
+This step requests the shapefile from the user using a pop-up dialog. This progress bar will be displayed:
+
+```{r pbshp, fig.cap = 'Progress Bar: Identify Shapefile', fig.alt = 'Progress Bar: Identify Shapefile', echo = FALSE}
+knitr::include_graphics("images/pb_loadshp.png")
+```
+
+### How this step works
+
+In this dialog, you can navigate to any shapefile on your computer or network. To follow the steps as shown, navigate to the "extdata" folder in your installation of "gatpkg", which you can reach via your filepath in [Running GAT]. Select the "hftown" shapefile. 
+
+```{r shppic, fig.cap = 'Dialog: Identify Shapefile', fig.alt = 'Dialog: Identify Shapefile', echo = FALSE}
+# generate window for image
+# gatpkg::locateGATshapefile()
+knitr::include_graphics("images/pick_shp.png")
+```
+
+Select "hftown.shp" and click `Open` to move to the next step or click `Cancel` to end GAT. 
+
+
+### About this step
+
+The function [locateGATshapefile()](../html/locateGATshapefile.html) checks that:
+
+* the shapefile uses polygons
+* at least one character variable can be used as an area identifier (such as name, geoid, or index)
+* at least one numeric variable can be aggregated
+
+If any of these checks fail, you will receive an error message and will be asked to select a new shapefile. The "open file" dialog may not look exactly as shown; sometimes it includes a folder list on the left.
+
+Learn more about the example aggregation shapefile, [hftown](../html/hftown.html).
+
+
+## Step 2. Request shapefile identifier
+
+This step requests a unique identifier variable from the user using a pop-up dialog. This ID will be overwritten as areas are aggregated and a crosswalk from these identifiers to the ones produced by GAT will be generated at the end.
+
+```{r pbid, fig.cap = 'Progress Bar: Identify Identifier', fig.alt = 'Progress Bar: Identify Identifier', echo = FALSE}
+knitr::include_graphics("images/pb_id.png")
+```
+
+### How this step works
+
+In this dialog, select the variable you would like to use from the drop-down list. To follow the steps as shown, select "ID".
+
+```{r idpic, fig.cap = 'Dialog: Identify Identifier', fig.alt = 'Dialog: Identify Identifier', echo = FALSE}
+# generate window for image
+# gatpkg::identifyGATid(gatpkg::hftown)
+knitr::include_graphics("images/pick_id.png")
+```
+
+Click `Next >` to move to the next step, `< Back` to move to the previous step (selecting a shapefile), `Cancel` to end the program, or `Help` to get further guidance.
+
+
+### About this step
+
+The function [identifyGATid()](../html/identifyGATid.html) lists only character variables with unique values from the shapefile's DBF. If the identifier you are looking for does not show up, it may either be numeric or contain at least one non-unique value. If you wish to use a numeric identifier, you will need to convert it to character before running GAT.
+
+
+## Step 3. Request boundary variable
+
+This step requests the boundary variable from the user using a pop-up dialog. GAT will aggregate within this boundary first, if possible.
+
+```{r pbboundary, fig.cap = 'Progress Bar: Identify Boundary', fig.alt = 'Progress Bar: Identify Boundary', echo = FALSE}
+knitr::include_graphics("images/pb_border.png")
+```
+
+### How this step works
+
+In this dialog, select the variable you would like to use from the drop-down list. If you would like to require that GAT enforces boundaries, click the checkbox as shown in the image. If you do not want to use a boundary, select "NONE" from the drop-down menu. If you select "NONE", the program will ignore whether you checked the box. 
+
+```{r boundarypic, fig.cap = 'Dialog: Identify Boundary', fig.alt = 'Dialog: Identify Boundary', echo = FALSE}
+# generate window for image
+# gatpkg::identifyGATboundary(shp = gatpkg::hftown)
+knitr::include_graphics("images/pick_border.png")
+```
+
+To follow the steps as shown, select "COUNTY" and check the box.
+
+Click `Next >` to move to the next step, `< Back` to move to the previous step (selecting the identifier), `Cancel` to end the program, or `Help` to get further guidance.
+
+### About this step
+
+The function [identifyGATboundary()](../html/identifyGATboundary.html) lists only character variables with at least one non-unique value from the shapefile's DBF. If the boundary you are looking for does not show up, it may either be numeric or contain no non-unique values.
+
+
+## Step 4. Request aggregation variables
+
+This step requests the aggregation variables and their desired minimum and maximum values from the user using a pop-up dialog.
+
+
+```{r pbaggregator, fig.cap = 'Progress Bar: Identify Aggregators', fig.alt = 'Progress Bar: Identify Aggregators', echo = FALSE}
+knitr::include_graphics("images/pb_aggs.png")
+```
+
+### How this step works
+
+In this dialog, select the variables you would like to aggregate from the drop-down lists. Enter your desired minimum and maximum values for each aggregated area in the text boxes. You may want to include minimum values to increase the likelihood of stable rates and a maximum value to either exclude very populous areas or to ensure most areas have roughly the same population size.
+
+
+```{r aggpick, fig.cap = 'Dialog: Identify Aggregators', fig.alt = 'Dialog: Identify Aggregators', echo = FALSE}
+# generate window for image
+# gatpkg::identifyGATaggregators(gatpkg::hftown)
+knitr::include_graphics("images/pick_aggregators.png")
+```
+
+To follow the steps as shown, select "TOTAL_POP". Change the minimum value to "6,000". Change the maximum value to "15,000". Leave all options on the second row as "none".
+
+Click `Next >` to move to the next step, `< Back` to move to the previous step (selecting the boundary variable), `Cancel` to end the program, or `Help` to get further guidance.
+
+### About this step
+
+The function [identifyGATaggregators()](../html/identifyGATaggregators.html) lists only numeric variables from the shapefile's DBF. The value boxes can support numbers, commas, and decimals. The value box also allows negative values, but the use of negative values has not been tested in GAT.
+
+If you enter any other characters into the value boxes, you will get an error and a new dialog will appear asking you to re-enter the value. If you enter "none" in the value boxes, that triggers default values, which are the minimum value of the selected variable for "minimum value" and the sum of values for the selected variable for "maximum value".
+
+
+## Step 9. Request whether to save KML file
+
+This step asks whether the user wants to save a KML file using a pop-up dialog.
+
+```{r pb10, fig.cap = 'Progress Bar: Save KML', fig.alt = 'Progress Bar: Save KML', echo = FALSE}
+knitr::include_graphics("images/pb_pickkml.png")
+```
+
+### How this step works
+
+In this dialog, select "Yes" or "No". 
+
+```{r kmlpic, fig.cap = 'Dialog: Save KML', fig.alt = 'Dialog: Save KML', echo = FALSE}
+# generate window for image
+# gatpkg::saveGATkml(step = 9)
+knitr::include_graphics("images/pick_kml.png")
+```
+
+To follow the steps as shown, select "No". 
+
+Click `Next >` to move to the next step, `< Back` to move to the previous step (selecting the rate settings), `Cancel` to end the program, or `Help` to get further guidance.
+
+### About this step
+
+The function [saveGATkml()](../html/saveGATkml.html) requests a simple "Yes" or "No". While a KML file is optional, a shapefile is saved by default.
+
+## Step 10. Request where to save shapefile
+
+This step asks the user where to save the shapefile using a pop-up dialog.
+
+```{r pb11, fig.cap = 'Progress Bar: Save File', fig.alt = 'Progress Bar: Save File', echo = FALSE}
+knitr::include_graphics("images/pb_picksave.png")
+```
+
+### How this step works
+
+In this dialog, you can navigate to any folder on your computer or network. 
+
+```{r savepic, fig.cap = 'Dialog: Save File', fig.alt = 'Dialog: Save File', echo = FALSE}
+# generate window for image
+# gatpkg::saveGATfiles()
+knitr::include_graphics("images/pick_save.png")
+```
+
+To follow the steps as shown, navigate to your documents folder. Enter "hftown_agg6k15k_popwt". 
+
+Click "Save" to move to the next step or click "Cancel" to end GAT. 
+
+### About this step
+
+The function [saveGATfiles()](../html/saveGATfiles.html) checks if the name you provide already exists. If so, it asks if you want to overwrite the existing files. All files created will be saved here, with this filename (including log, plots, and KML, if requested).
+
+
+## Step 11. Request settings confirmation
+
+```{r pb12, fig.cap = 'Progress Bar: Confirm GAT Settings', fig.alt = 'Progress Bar: Confirm GAT Settings', echo = FALSE}
+knitr::include_graphics("images/pb_confirm.png")
+# update screenshot with correct buttons
+```
+
+This step requests confirmation of all settings from the user using a pop-up dialog.
+
+### How this step works
+
+In this dialog, you can select a step to modify or move on. To modify steps, select the first step you want to modify from top to bottom. After each modification, you will return to this dialog to select the next step. 
+
+```{r confirmpic, fig.cap = 'Dialog: Confirm GAT Settings', fig.alt = 'Dialog: Confirm GAT Settings', echo = FALSE}
+knitr::include_graphics("images/pick_confirm.png")
+```
+
+If you choose to move on, select an item from the drop-down menu and click `Confirm`. To cancel, click `Cancel GAT`. Click `Help` to get further guidance. To follow the steps as shown, select "None" and click `Confirm`.
+
+
+### About this step
+
+The function [confirmGATbystep()](../html/confirmGATbystep.html) requests a simple `Yes` or `No`. To end GAT from here, click the "x" in the upper right corner.
+
+
+# Shapefile processing section
+
+At this point, if the user has not cancelled the program, the shapefile processing begins.
+
+## Step 13. Run aggregation loop
+
+```{r pb14, out.width = '60%', fig.cap = 'Progress Bar: Run the Aggregation', echo = FALSE}
+knitr::include_graphics("images/pb_doagg.png")
+```
+
+
+This is the second processing step and probably the slowest step in the entire program, especially if you select population weighting. It opens a new progress bar specifically for the aggregation loop. This progress bar updates with the number of areas left to aggregate as each aggregation completes, then closes when the loop finishes.
+
+### About this step
+
+This step calls the function [defineGATmerge()](../html/defineGATmerge.html) to create the aggregation key or crosswalk. It creates a subset of polygons for which their value for the aggregation variable(s) is below your minimum desired aggregation value(s). It reorders the subset from largest to smallest aggregation value. Starting with the largest value, it determines acceptable neighbors for aggregation based on your settings.
+
+
+## Step 14. Aggregate areas
+
+```{r pb15, out.width = '60%', fig.cap = 'Progress Bar: Clean Up the Shapefile', echo = FALSE}
+knitr::include_graphics("images/pb_endagg.png")
+```
+
+
+This is the third processing step, which aggregates areas as defined by the crosswalk created in Step 13. If you requested rates, they are calculated in this step.
+
+### About this step
+
+This step calls the function [mergeGATareas()](../html/mergeGATareas.html) to perform the aggregation. It also cleans up row names and other information that may not have been properly retained during the aggregation. 
+
+# Mapping section
+
+This section contains the maps that are created by GAT. The final PDF will contain between four and seven maps, depending on your selections. Given all seven maps:
+
+- **Maps 1 & 2:** Choropleths of the first aggregation variable before and after aggregating.
+- **Maps 3 & 4:** Choropleths of the second aggregation variable before and after aggregating (optional).
+- **Map 5:** Comparison of original and aggregated areas.
+- **Map 6:** Choropleth of the compactness ratio after aggregating.
+- **Map 7:** Choropleth of the rate, ratio, or density defined in the rate selection (optional).
+
+Note: R package documentation allows you to view images, but not link to them. For all maps, view larger images by right clicking on the maps and selecting, "Open image in new tab." 
+
+## Step 18. Map comparison of old and new areas
+
+```{r pb19, out.width = '60%', fig.cap = 'Progress Bar: Compare Original and Aggregated Areas', echo = FALSE}
+knitr::include_graphics("images/pb_mapdiff.png")
+```
+
+In this map, the aggregated area map is overlaid on top of the original map so you can see how smaller areas combined into larger ones.
+
+```{r mapca, fig.show = "hold", out.width = '90%', fig.cap = 'Map: Compare Original and Aggregated Areas', echo = FALSE}
+knitr::include_graphics("images/map_compare.png")
+```
+### About this step
+
+This step calls the function [plotGATcompare()](../html/plotGATcompare.html) to draw the map.
+
+# File saving section
+
+This section contains the file saving steps. 
+
+## Step 21. Save maps and settings
+
+```{r pbmaps, out.width = '60%', fig.cap = 'Progress Bar: Save a PDF of the maps', echo = FALSE}
+knitr::include_graphics("images/pb_savemaps.png")
+```
+
+In this section, all maps are saved to a PDF file, with one map per page, in the same folder as the aggregated shapefile. The same save filename is used with "plots" at the end.
+
+An Rdata file is also saved. This file includes all settings in R format, which can be opened in R or run through GAT a second time. If you want to use the Rdata file to re-run GAT, use this code and change `myfilepath` to the location and name of your Rdata file:
+
+> `myfilepath <- "C:/users/ajs/mygatfilesettings.Rdata"`  
+> `gatpkg::runGATprogram(settings = myfilepath)`
+
+
+File saved to the save folder if you followed the vignette:
+
+- hftown_agg6k15k_popwtplots.pdf (containing 5 maps)
+- hftown_agg6k15k_popwtsettings.Rdata
+
+
+
+## Step 22. Save original shapefile
+
+```{r pbold, out.width = '60%', fig.cap = 'Progress Bar: Save the Original Shapefile', echo = FALSE}
+knitr::include_graphics("images/pb_saveold.png")
+```
+
+The purpose of saving this shapefile is to provide a key/crosswalk (GATid) identifying which aggregated area each original area fell inside when aggregated. The GATflag variable flags areas that were excluded from aggregation or generated warnings in the log:
+
+- *value = 0:* no flag
+- *value = 1:* area excluded based on exclusion criteria
+- *value = 5:* area excluded because value of aggregation variable exceeded maximum value
+
+The original shapefile is saved with the following changes:
+
+- It is renamed to match the save filename you selected with "in" at the end and saved in the same folder as the aggregated shapefile.
+- The variables GATid and GATflag are appended to its dataframe.
+
+Files saved to the save folder if you followed the vignette:
+
+- hftown_agg6k15k_popwtin.dbf 
+- hftown_agg6k15k_popwtin.prj 
+- hftown_agg6k15k_popwtin.shp 
+- hftown_agg6k15k_popwtin.shx 
+
+## Step 23. Save aggregated shapefile
+
+```{r pbnew, out.width = '60%', fig.cap = 'Progress Bar: Save the Aggregated Shapefile', echo = FALSE}
+knitr::include_graphics("images/pb_savenew.png")
+```
+
+In this section, the aggregated shapefile is saved. It includes all of the variables in the original shapefile with these changes:
+
+- For categorical variables, the first option was selected for each merge.
+- For numeric variables, the values were summed unless the variables represented latitude or longitude (or x and y), in which case they were averaged.
+
+Additional variables created as part of the aggregation process and included in the shapefile's database:
+
+- **GATx:** longitude of area centroid (geographic unless population weighting was selected)
+- **GATy:** latitude of area centroid (geographic unless population weighting was selected)
+- **GATcratio:** compactness ratio for the area
+- **GATnumIDs:** The number of original areas that were merged into each aggregated area
+- **GATflag:** flag of areas that were excluded from aggregation or generated warnings in the log
+    - *value = 0:* no flag
+    - *value = 1:* area excluded based on exclusion criteria
+    - *value = 5:* area excluded because value of aggregation variable exceeded maximum value
+    - *value = 10:* value of area's aggregation variable is below minimum value, but no other areas are eligible for further aggregation
+
+Files saved to the save folder if you followed the vignette:
+
+- hftown_agg6k15k_popwt.dbf 
+- hftown_agg6k15k_popwt.prj 
+- hftown_agg6k15k_popwt.shp 
+- hftown_agg6k15k_popwt.shx 
+
+
+## Step 24. Save KML file
+
+```{r pbkml, out.width = '60%', fig.cap = 'Progress Bar: Save the KML File', echo = FALSE}
+knitr::include_graphics("images/pb_savekml.png")
+```
+
+In this step, nothing happens if you are following the vignette and selected no when asked if you wanted to save a KML file. If you had selected yes, a KML file would be created in this step that could then be opened in Google Earth. 
+
+Files saved to the save folder, if "Yes" was selected in Step 9:
+
+- hftown_agg6k15k_popwt.kml 
+
+
+## Step 25. Save log
+
+```{r pblog, out.width = '60%', fig.cap = 'Progress Bar: Save the Log of Your Run', echo = FALSE}
+knitr::include_graphics("images/pb_log.png")
+```
+
+In this step, a text file is saved that includes all of your settings, basic information on data distributions for the aggregation variable(s), and warnings regarding possible issues with the aggregation. 
+
+
+Files saved to the save folder if you followed the vignette:
+
+- hftown_agg6k15k_popwt.log
+
+
+# GAT is finished, now what?
+
+## Where to find your files
+
+All files are saved to the save folder you selected. The log file contains a partial list of files created. The R console will display a full list of all files created and their location when the aggregation is complete, which will look something like this:
+
+> The following files have been written to the folder  
+> C:/Users/ajs11/Documents/GAT:  
+>   hftown_agg6k15k_popwt.dbf  
+>   hftown_agg6k15k_popwt.prj  
+>   hftown_agg6k15k_popwt.shp  
+>   hftown_agg6k15k_popwt.shx  
+>   hftown_agg6k15k_popwtin.dbf  
+>   hftown_agg6k15k_popwtin.prj  
+>   hftown_agg6k15k_popwtin.shp   
+>   hftown_agg6k15k_popwtin.shx  
+>   hftown_agg6k15k_popwtplots.pdf  
+>   hftown_agg6k15k_popwt.log  
+>   hftown_agg6k15k_popwtsettings.Rdata  
+> 
+> See the log file for more details.
+
+
+## How to use your files
+
+- **Shapefiles (\*.shp):** Open in ArcGIS, QGIS, or similar GIS software. 
+- **KML file:** Open in Google Earth desktop or online.
+- **PDF file:** Open in any PDF reader.
+- **Log file:** Open in any text editor, such as Notepad++.
+- **R data file (\*.Rdata):** Open in R using the format `load("C:/filepath/settings.Rdata")`.

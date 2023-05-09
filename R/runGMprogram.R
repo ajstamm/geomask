@@ -5,6 +5,16 @@
 #' @param bgcol      Text string containing UI background color.
 #' @param buttoncol  Text string containing UI button color.
 #'
+#'
+#' @examples
+#'
+#' if (interactive()) {
+#' # this code will run the full program
+#' runGMprogram()
+#' }
+#'
+#' @export
+#'
 
 runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
                          settings = NULL) {

@@ -62,23 +62,28 @@ maskvars <- list(
 )
 
 filevars <- list(
-  pointfile = "onondaga_landmarkpoints",            # original locations file
-  pointpath = paste(getwd(), "testing", sep = "/"), # original locations path
-  boundfile = "onondaga_tracts",                    # original boundary file
-  boundpath = paste(getwd(), "testing", sep = "/"), # original boundary path
-  pathout = paste(getwd(), "testing", sep = "/"),   # save path
-  fileout = "geomasked_points"                      # save file
+  pointfile = "landmarks",     # original locations file
+  pointpath = getwd(),         # original locations path
+  boundfile = "tracts",        # original boundary file
+  boundpath = getwd(),         # original boundary path
+  boundin = paste(getwd(), "tracts", sep = "/"),
+  pathout = getwd(),           # save path
+  fileout = "geomasked_points" # save file
 )
 
 mysettings <- list(
   starttime = Sys.time(),
   version = "1.0",
   pkgdate = format(Sys.Date(), "\%m-\%d-\%Y"),
-  endtime = Sys.time()
+  endtime = Sys.time() + 250,
+  exists = TRUE,
+  kml = FALSE
 )
 
-writeGATlog(
-  area = hftown,
+ot <- tigris::tracts("NY", "Onondaga", year = 2010)
+
+writeGMlog(
+  area = ot,
   filevars = filevars,
   mysettings = mysettings,
   maskvars = maskvars

@@ -37,3 +37,10 @@ This function is modified from a similar function in gatpkg. It creates
 a user dialog to read the minimum and maximum distances, as well as the
 distance units, for masking.
 }
+\examples{
+
+if (interactive()) {
+selectGMdistances()
+}
+
+}

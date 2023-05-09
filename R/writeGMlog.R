@@ -1,9 +1,8 @@
-#' Write GAT Log
+#' Write the geomasker log
 #'
 #' This function writes a log of the aggregation process. It reports the
-#' input and output datasets, variables and settings used, distributions of
-#' aggregation variables, map projection, program start and end times, and
-#' any warnings that were generated.
+#' input and output datasets, variables and settings used, map projection,
+#' and program start and end times.
 #'
 #' @param area         Spatial layer.
 #' @param filevars     List of file names and paths. Of relevance to this
@@ -44,23 +43,28 @@
 #' )
 #'
 #' filevars <- list(
-#'   pointfile = "onondaga_landmarkpoints",            # original locations file
-#'   pointpath = paste(getwd(), "testing", sep = "/"), # original locations path
-#'   boundfile = "onondaga_tracts",                    # original boundary file
-#'   boundpath = paste(getwd(), "testing", sep = "/"), # original boundary path
-#'   pathout = paste(getwd(), "testing", sep = "/"),   # save path
-#'   fileout = "geomasked_points"                      # save file
+#'   pointfile = "landmarks",     # original locations file
+#'   pointpath = getwd(),         # original locations path
+#'   boundfile = "tracts",        # original boundary file
+#'   boundpath = getwd(),         # original boundary path
+#'   boundin = paste(getwd(), "tracts", sep = "/"),
+#'   pathout = getwd(),           # save path
+#'   fileout = "geomasked_points" # save file
 #' )
 #'
 #' mysettings <- list(
 #'   starttime = Sys.time(),
 #'   version = "1.0",
 #'   pkgdate = format(Sys.Date(), "%m-%d-%Y"),
-#'   endtime = Sys.time()
+#'   endtime = Sys.time() + 250,
+#'   exists = TRUE,
+#'   kml = FALSE
 #' )
 #'
-#' writeGATlog(
-#'   area = hftown,
+#' ot <- tigris::tracts("NY", "Onondaga", year = 2010)
+#'
+#' writeGMlog(
+#'   area = ot,
 #'   filevars = filevars,
 #'   mysettings = mysettings,
 #'   maskvars = maskvars
@@ -68,8 +72,6 @@
 #' }
 #' @export
 
-# should the log include these?
-# * gatpkg citation?
 
 writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
                        settingsfile = NULL) {
@@ -106,7 +108,7 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
   # settings ----
   logtext <- c("NYSDOH Geomasking Tool Log",
                "\n  Version & date:", mysettings$version, mysettings$pkgdate,
-               "\n  Date run:", as.Date(Sys.time()),
+               "\n  Date run:", as.character(as.Date(Sys.time())),
                "\n  Time tool took to run:",
                round(difftime(mysettings$endtime, mysettings$starttime, units = "mins"),
                      digits = 2), "minutes", "\n")
@@ -125,9 +127,12 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
 
   # masking settings ----
   logtext <- c("\nMasking settings:    ",
-               "\n  Minimum distance:  ", maskvars$min,
-               "\n  Minimum distance:  ", maskvars$max,
-               "\n  Unit type  :       ", maskvars$unit)
+               "\n  Minimum distance:  ",
+               format(maskvars$min, big.mark=",", scientific=FALSE),
+               maskvars$unit,
+               "\n  Minimum distance:  ",
+               format(maskvars$max, big.mark=",", scientific=FALSE),
+               maskvars$unit)
   write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
 
 
@@ -139,7 +144,7 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
     write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
   } else {
     # data dictionary ----
-    logtext <- c("\n  Aggregated shapefile:             ",
+    logtext <- c("\n  Aggregated shapefile:",
                  paste0(filevars$fileout, ".shp"),
                  "\n    Variables created by GAT:",
                  "\n        point_id:", "duplicate of original locations identifier,",
@@ -159,24 +164,24 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
     write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
 
     # saved files ----
-    logtext <- c("All files have been saved to ", filevars$pathout,
-                 "\n  Original shapefile:", paste(filevars$pointfile, "shp", sep = "."),
+    logtext <- c("All files have been saved to", filevars$pathout,
+                 "\n  Original shapefile:  ", paste(filevars$pointfile, "shp", sep = "."),
                  "\n  Original shapefile with both original and masked latitude and longitude:",
-                 "\n    ", paste(paste(filevars$fileout, "old", sep = "_"), "shp", sep = "."),
-                 "\n  Masked shapefile:", paste(filevars$userout, "shp", sep = "."))
+                 "\n                       ", paste(paste(filevars$fileout, "old", sep = "_"), "shp", sep = "."),
+                 "\n  Masked shapefile:    ", paste(filevars$fileout, "shp", sep = "."))
     write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
   }
-  logtext <- c("\n  Maps:                             ",
+  logtext <- c("\n  Maps:                ",
                paste0(filevars$fileout, "plots.pdf"),
-               "\n  Log file:                         ",
+               "\n  Log file:            ",
                paste0(filevars$fileout, ".log"),
-               "\n  R settings file:                  ",
+               "\n  R settings file:     ",
                paste0(filevars$fileout, "settings.Rdata"))
   write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
   if (mysettings$kml) {
-    logtext <- c("\n  KML file (raw):                   ",
+    logtext <- c("\n  KML file (raw):    ",
                  paste0(filevars$fileout, ".kml"),
-                 "\n  KMZ file (zipped):                ",
+                 "\n  KMZ file (zipped): ",
                  paste0(filevars$fileout, ".kmz"))
   } else {
     logtext <- c(logtext, "\n  You chose not to write a KML file.")

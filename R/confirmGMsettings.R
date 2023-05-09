@@ -1,4 +1,4 @@
-#' Confirm GAT Settings for Each Step
+#' Confirm geomasking settings
 #'
 #' @description
 #' This function opens a dialog window for the user to select whether the
@@ -21,8 +21,19 @@
 #' @param buttoncol  Text string containing UI button color.
 #' @param step       Integer step in the GAT program, for help reference.
 #'
-# @examples
+#' @examples
 #'
+#' if (interactive()) {
+#' maskvars <- list(min = 100, max = 1000, unit = "meters",
+#'                  point_id = "POINTID", bound_id = "GEOID10")
+#' filevars <- list(
+#'   pointin = paste(getwd(), "points", sep = "/"),
+#'   boundin = paste(getwd(), "tracts", sep = "/"),
+#'   userout = paste(getwd(), "geomasked", sep = "/")
+#' )
+#' confirmGMsettings(maskvars = maskvars, filevars = filevars)
+#'
+#' }
 #'
 #' @export
 

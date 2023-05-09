@@ -3,6 +3,28 @@
 #' @param myshps    List of shapefiles
 #' @param maskvars  List of settings for calculating masked locations.
 #'
+#' @examples
+#'
+#' maskvars <- list(
+#'   min = 100,
+#'   max = 1000,
+#'   unit = "meters",
+#'   point_id = "POINTID",
+#'   bound_id = "GEOID10"
+#' )
+#'
+#' ot <- tigris::tracts("NY", "Onondaga", year = 2010)
+#' ol <- tigris::landmarks("NY", "point", year = 2015)
+#' t <- sf::st_contains(ot, ol) |> unlist()
+#' ol <- ol[t, ]
+#' myshps <- list(
+#'   point = ol,
+#'   bound = ot
+#' )
+#'
+#' myshps <- calculateGMpoints(myshps = myshps, maskvars = maskvars)
+#'
+#' @export
 #'
 
 

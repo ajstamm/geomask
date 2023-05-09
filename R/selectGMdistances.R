@@ -1,4 +1,4 @@
-#' Select GeoMasking distances
+#' Select geoMasking distances
 #'
 #' This function is modified from a similar function in gatpkg. It creates
 #' a user dialog to read the minimum and maximum distances, as well as the
@@ -12,6 +12,15 @@
 #' @param quitopt    Text string for the cancel button.
 #' @param bgcol      Text string containing UI background color.
 #' @param buttoncol  Text string containing UI button color.
+#'
+#' @examples
+#'
+#' if (interactive()) {
+#' selectGMdistances()
+#' }
+#'
+#' @export
+#'
 #'
 
 selectGMdistances <- function(step = 3, min = "1,000", max = "10,000",

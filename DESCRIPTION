@@ -29,4 +29,5 @@ Imports:
     sf,
     tcltk
 Suggests: 
-    knitr
+    knitr,
+    tigris

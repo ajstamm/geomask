@@ -1,0 +1,47 @@
+NYSDOH Geomasking Tool Log 
+  Version & date: 1.0 05-09-2023 
+  Date run: 2023-05-09 
+  Time tool took to run: 18.07 minutes 
+
+
+Input file:           
+  Projection:         +proj=longlat +datum=NAD83 +no_defs 
+  Field names:        STATEFP10, COUNTYFP10, TRACTCE10, GEOID10, NAME10, NAMELSAD10, 
+                      MTFCC10, FUNCSTAT10, ALAND10, AWATER10,  
+  Identifier:         POINTID 
+  Boundary file:      C:/Users/ajstamm/Documents/GitHub/Coding/master/geomask/tracts 
+  Boundary variable:  GEOID10 
+Output file:
+
+Masking settings:     
+  Minimum distance:   100 meters 
+  Minimum distance:   1,000 meters
+
+  Aggregated shapefile: geomasked_points.shp 
+    Variables created by GAT: 
+        point_id: duplicate of original locations identifier, POINTID 
+        bound_id: duplicate of boundaries identifier, GEOID10 
+        orig_lat: original location latitude 
+        orig_lon: original location longitude 
+        mask_lat: shifted location latitude 
+        mask_lon: shifted location longitude 
+        flag:     number corresponds to the number of times boundaries  
+                  had to be recalculated to create a valid area to  
+                  select a masking point using the equation 
+                    new maximum value = prior minimum value 
+                    new minimum value = half of prior minimum value 
+                  e.g. flag = 2 means boundaries had to be recalculated twice
+All files have been saved to C:/Users/ajstamm/Documents/GitHub/Coding/master/geomask 
+  Original shapefile:   landmarks.shp 
+  Original shapefile with both original and masked latitude and longitude: 
+                        geomasked_points_old.shp 
+  Masked shapefile:     geomasked_points.shp
+
+  Maps:                 geomasked_pointsplots.pdf 
+  Log file:             geomasked_points.log 
+  R settings file:      geomasked_pointssettings.Rdata
+
+  Maps:                 geomasked_pointsplots.pdf 
+  Log file:             geomasked_points.log 
+  R settings file:      geomasked_pointssettings.Rdata 
+  You chose not to write a KML file.
