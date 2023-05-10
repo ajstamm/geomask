@@ -29,7 +29,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
   myshps <- list()
   temp <- list(quit = FALSE, backopt = TRUE)
   step <- 1
-  quitopt <- "Quit Geomasker"
+  quitopt <- "Quit geomasker"
 
   if (!is.null(settings)) {
     load(settings)
@@ -63,7 +63,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
     # request or create point ID
     while (step == 1 & !temp$quit) {
       pb <- list(title = "NYSDOH Geomask Tool: identify shapefile",
-                 label = "Identifying and selecting the point-level shapefile.")
+                 label = "Identifying and selecting the location shapefile.")
       tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                               label = pb$label)
 
@@ -86,6 +86,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
         # error checking
         if (!sum(sf::st_geometry_type(myshps$point) == "POINT") ==
             nrow(myshps$point)) {
+          # update this later if "shift polygons" is added
           # message: wrong kind of shapefile; repeat dialog
           temp$msg <- paste("The shapefile", filevars$filein,
                             "contains non-point geographies.\n",
@@ -104,10 +105,10 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
             myshps$point <- sf::st_transform(myshps$point, 4326)
           }
 
-          temp$msg <- paste("Please select the variable that \nidentifies your points.")
-          temp$hlp <- paste0("Select your point ID variable. \n",
+          temp$msg <- paste("Please select the variable that \nidentifies your locations.")
+          temp$hlp <- paste0("Select your location ID variable. \n",
                              "  \u2022  To continue,  click 'Next >'. \n",
-                             "  \u2022  To quit the Geomasker, click 'Cancel'.")
+                             "  \u2022  To quit the geomasker, click 'Cancel'.")
 
           temp$items <- c()
           temp$data <- data.frame(myshps$point)
@@ -122,7 +123,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
 
           maskvars$point_id <-
             gatpkg::inputGATvariable(mylist = temp$items, instruction = temp$msg,
-                                     title = "Point ID Variable", checkopt = "",
+                                     title = "Location ID Variable", checkopt = "",
                                      checkbox = FALSE, help = temp$hlp, step = step,
                                      helppage = "inputGATvariable", myvar = NULL,
                                      check = "", backopt = temp$backopt,
