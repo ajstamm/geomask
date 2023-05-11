@@ -2,8 +2,7 @@
 #'
 #' @description
 #' This function opens a dialog window for the user to select whether the
-#' selected settings for GAT are correct. It provides the settings in list
-#' format. The dialog window looks like this.
+#' selected settings for GAT are correct.
 #'
 #' @details
 #' This function reads in the lists created during the user input portion of

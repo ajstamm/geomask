@@ -57,6 +57,7 @@ plotGMcompare <- function(bound, original = NULL, shifted = NULL, maskvars,
   mytype <- "polygon"
   mytitle <- "Map showing"
 
+
   if (!is.null(original)) {
     mycol <- c(mycol, "blue")
     if (sum(sf::st_geometry_type(original) == "POINT") == nrow(original)) {

@@ -13,7 +13,7 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-knitr::opts_chunk$set(
+knitr::opts_chunk$set(eval = TRUE, echo = FALSE,
   collapse = TRUE,
   comment = "#>"
 )
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette is designed for a user with no experience in R who just wants to run the default version of the geomasking tool, or geomasker. This manual breaks down the different parts of the program and describes what to do and what to expect using 2010 Census shapefiles for Onondaga County in New York State, which are embedded in the package. These shapefiles will be used in this manual. 
+This vignette is designed for a user with no experience in R who just wants to run the default version of the NYS Geomasking Tool, or geomasker. This manual breaks down the different parts of the program and describes what to do and what to expect using 2010 Census shapefiles for Onondaga County in New York State, which are embedded in the package. These shapefiles will be used in this manual. 
 
 *Note: For users who wish to modify the geomasker, developer options have been written into several of the package functions. Check the functions' help pages (linked from function names) and the [Technical Notes](../doc/tech_notes.html) for more information. Users interested only in running the geomasker can ignore these links.*
 
@@ -38,16 +38,14 @@ Please note that R is case sensitive. The provided code is designed to be copy-p
 
 To follow this vignette, you will need appropriate shapefiles. For that purpose, the first step is to create the shapefiles using the R package tigris. The tigris package is not required to run the geomasker, so you may need to install it first.
 
-```{r installtigris, eval = FALSE}
+```{r installtigris, eval = FALSE, echo = TRUE}
 # install tigris if necessary
-
-
-
+install.packages("tigris")
 ```
 
 The code below will save two shapefiles to your working directory. To find your working directory, run `getwd()`. To change your working directory, run `setwd(your_filepath)` with the folder you want. R does recognize relative path commands like `../`.
 
-```{r createshapefiles, eval = FALSE}
+```{r createshapefiles, eval = FALSE, echo = TRUE, warning = FALSE, message = FALSE}
 # create and save the shapefiles
 ot <- tigris::tracts("NY", "Onondaga", year = 2010)
 ol <- tigris::landmarks("NY", "point", year = 2015)
@@ -64,7 +62,9 @@ rm(ol, ot, t)
 
 To run the geomasker, you only need one line of code:
 
-> `geomask::runGMprogram()`
+```{r rungm, eval = FALSE, echo = TRUE, warning = FALSE, message = FALSE}
+geomask::runGMprogram()
+```
 
 The steps below will walk you through the dialogs and describe the types of input expected using the shapefiles created above. 
 
@@ -91,20 +91,20 @@ This step requests the location shapefile and identifier variable from the user 
 ```{r shppic, fig.cap = 'Dialog: Identify Location Shapefile', fig.alt = 'Dialog: Identify Location Shapefile', echo = FALSE}
 # generate window for image
 # uses gatpkg::locateGATshapefile()
-knitr::include_graphics("images/pick_shp.png")
+knitr::include_graphics("images/locfile.png")
 ```
 
-To follow the steps as shown, select "onondaga_points.shp" and click `Open` to move to the next step or click `Cancel` to end the program. 
+To follow the steps as shown, select "onondaga_points.shp" and click "Open" to move to the next step or "Cancel" to end the program. 
 
 In the second dialog, all variables in the locations shapefile with unique (non-repeated) values are listed. Select the variable you wish to use for your identifier.
 
 ```{r locidpic, fig.cap = 'Dialog: Identify location ID variable', fig.alt = 'Dialog: Identify Location ID', echo = FALSE}
 # generate window for image
 # uses gatpkg::locateGATshapefile()
-knitr::include_graphics("images/locid_shp.png")
+knitr::include_graphics("images/locid.png")
 ```
 
-To follow the steps as shown, select "POINTID". Click `Next >` to move to the next step, `< Back` to move to the previous step, `Quit geomasker` to end the program, or `Help` to get further guidance.
+To follow the steps as shown, select "POINTID". Click "Next >" to move to the next step, "< Back" to move to the previous step, "Quit geomasker" to end the program, or "Help" to get further guidance.
 
 
 ## Step 2. Request boundary variable
@@ -114,21 +114,21 @@ This step requests the boundary shapefile and identifier variable from the user 
 ```{r boundpic, fig.cap = 'Dialog: Identify Boundary Shapefile', fig.alt = 'Dialog: Identify Boundary Shapefile', echo = FALSE}
 # generate window for image
 # uses gatpkg::locateGATshapefile()
-knitr::include_graphics("images/pick_shp.png")
+knitr::include_graphics("images/boundfile.png")
 ```
 
 
-To follow the steps as shown, select "onondaga_tracts.shp" and click `Open` to move to the next step or click `Cancel` to end the program. 
+To follow the steps as shown, select "onondaga_tracts.shp" and click "Open" to move to the next step or click "Cancel" to end the program. 
 
 In the second dialog, all variables in the boundary shapefile with unique (non-repeated) values are listed. Select the variable you wish to use for your identifier.
 
 ```{r boundidpic, fig.cap = 'Dialog: Identify boundary ID variable', fig.alt = 'Dialog: Identify Boundary ID', echo = FALSE}
 # generate window for image
 # uses gatpkg::locateGATshapefile()
-knitr::include_graphics("images/boundid_shp.png")
+knitr::include_graphics("images/boundid.png")
 ```
 
-To follow the steps as shown, select "GEOID10". Click `Next >` to move to the next step, `< Back` to move to the previous step, `Quit geomasker` to end the program, or `Help` to get further guidance.
+To follow the steps as shown, select "GEOID10". Click "Next >" to move to the next step, "< Back" to move to the previous step, "Quit geomasker" to end the program, or "Help" to get further guidance.
 
 
 
@@ -141,25 +141,25 @@ This step requests the desired minimum and maximum values and their unit of meas
 # generate window for image
 # geomask::selectGMdistance(step = 3, min = 100, max = 500, unit = "",
 #                           quitopt = "Quit geomasker")
-knitr::include_graphics("images/pick_distances.png")
+knitr::include_graphics("images/distselect.png")
 ```
 
-To follow the steps as shown, select "meters" for unit of distance, change the minimum value to "1,000", and change the maximum value to "5,000". Click `Next >` to move to the next step, `< Back` to move to the previous step, `Quit geomasker` to end the program, or `Help` to get further guidance.
+To follow the steps as shown, select "meters" for unit of distance, change the minimum value to "1,000", and change the maximum value to "5,000". Click "Next >" to move to the next step, "< Back" to move to the previous step, "Quit geomasker" to end the program, or "Help" to get further guidance.
 
 
 
 
-## Step 9. Request whether to save KML file
+## Step 4. Request whether to save KML file
 
 This step asks whether the user wants to save a KML file using a pop-up dialog.
 
 ```{r kmlpic, fig.cap = 'Dialog: Save KML', fig.alt = 'Dialog: Save KML', echo = FALSE}
 # generate window for image
 # gatpkg::saveGATkml(step = 9)
-knitr::include_graphics("images/pick_kml.png")
+knitr::include_graphics("images/kmlpick.png")
 ```
 
-To follow the steps as shown, select "No". Click `Next >` to move to the next step, `< Back` to move to the previous step, `Quit geomasker` to end the program, or `Help` to get further guidance.
+To follow the steps as shown, select "No". Click "Next >" to move to the next step, "< Back" to move to the previous step, "Quit geomasker" to end the program, or "Help" to get further guidance.
 
 ## Step 5. Request where to save shapefile
 
@@ -168,7 +168,7 @@ This step asks the user where to save the shapefile using a pop-up dialog. In th
 ```{r savepic, fig.cap = 'Dialog: Save File', fig.alt = 'Dialog: Save File', echo = FALSE}
 # generate window for image
 # gatpkg::saveGATfiles()
-knitr::include_graphics("images/pick_save.png")
+knitr::include_graphics("images/savefile.png")
 ```
 
 To follow the steps as shown, navigate to your documents folder. Enter "geomasked_points". Click "Save" to move to the next step or click "Cancel" to end the program. 
@@ -180,10 +180,10 @@ To follow the steps as shown, navigate to your documents folder. Enter "geomaske
 This step requests confirmation of all settings from the user using a pop-up dialog. In this dialog, you can select a step to modify or move on. To modify steps, select the first step you want to modify from top to bottom. After each modification, you will return to this dialog to select the next step. 
 
 ```{r confirmpic, fig.cap = 'Dialog: Confirm Settings', fig.alt = 'Dialog: Confirm Settings', echo = FALSE}
-knitr::include_graphics("images/pick_confirm.png")
+knitr::include_graphics("images/confirmdialog.png")
 ```
 
-If you choose to change something, select the relevant item from the drop-down menu and click `Confirm`. To cancel, click `Quit`. Click `Help` to get further guidance. To follow the steps as shown, select "None" and click `Confirm`.
+If you choose to change something, select the relevant item from the drop-down menu. Click "Confirm" to begin geomasking, "Quit" to end the program, or "Help" to get further guidance. To follow the steps as shown, select "None" and click "Confirm".
 
 
 # Shapefile processing section
@@ -193,7 +193,7 @@ At this point, if the user has not cancelled the program, the shapefile processi
 
 ## Step 7: Calculate masked points
 
-This is the only step in this section. This portion of the program is found in the function `calculateGMpoints()`. Because this step can take a while, a separate progress bar tracks its progress.
+This is the only step in this section. This portion of the program is found in the function [`calculateGMpoints()`](../man/calculateGMpoints.html). Because this step can take a while, a separate progress bar tracks its progress.
 
 Buffers are drawn around each point and rings are created by subtracting the inner buffer (radius = minimum value) from the outer buffer (radius = maximum value). These buffers are intersected with the boundary file. Only the portion of each ring that intersects with its location's corresponding tract is kept. The masked point is selected randomly from the masked area. 
 
@@ -204,126 +204,92 @@ This section contains the map created by the program.
 ## Step 8. Map comparison of old and new locations
 
 
-This map is a comparison of the original and geomasked locations. In this map, the original and shifted points are overlaid on top of the boundary map so you can see how the locations shifted. This portion of the program is found in the function `plotGMcompare()`. 
+This map is a comparison of the original and geomasked locations. In this map, the original and shifted points are overlaid on top of the boundary map so you can see how the locations shifted. This portion of the program is found in the function [`plotGMcompare()`](../man/plotGMcompare.html). 
 
-```{r mapca, fig.show = "hold", out.width = '90%', fig.cap = 'Map: Compare original and shifted locations', echo = FALSE}
-knitr::include_graphics("images/map_compare.png")
+```{r mapca, fig.show = "hold", fig.cap = 'Map: Compare original and shifted locations', echo = FALSE}
+knitr::include_graphics("images/mapcompare.png")
 ```
 
 *Note:* R package documentation allows you to view images, but not link to them. For the map, view a larger image by right clicking on the map and selecting "Open image in new tab." 
-
-
-----
-
-> start here - 
-> need to convert to geomasker below this point
-
 
 # File saving section
 
 This section contains the file saving steps. 
 
-## Step 21. Save maps and settings
+## Step 9. Save map and settings
 
-```{r pbmaps, out.width = '60%', fig.cap = 'Progress Bar: Save a PDF of the maps', echo = FALSE}
-knitr::include_graphics("images/pb_savemaps.png")
+In this section, the map is saved to a PDF file in the same folder as the aggregated shapefile. The same save filename is used with "map" at the end.
+
+An Rdata file is also saved. The same save filename is used with "settings" at the end. This file includes all settings in R format, which can be opened in R or run through the geomasker a second time. If you want to use the Rdata file to re-run the geomasker, use this code and change `myfilepath` to the location and name of your Rdata file:
+
+```{r savesettings, eval=FALSE}
+myfilepath <- "c:/users/my_id/my_folder/geomasked_points_settings.Rdata"
+geomask::runGMprogram(settings = myfilepath)
 ```
 
-In this section, all maps are saved to a PDF file, with one map per page, in the same folder as the aggregated shapefile. The same save filename is used with "plots" at the end.
+Files saved to the save folder if you followed the vignette:
 
-An Rdata file is also saved. This file includes all settings in R format, which can be opened in R or run through GAT a second time. If you want to use the Rdata file to re-run GAT, use this code and change `myfilepath` to the location and name of your Rdata file:
+- geomasked_points_map.pdf
+- geomasked_points_settings.Rdata
 
-> `myfilepath <- "C:/users/ajs/mygatfilesettings.Rdata"`  
-> `gatpkg::runGATprogram(settings = myfilepath)`
+
+## Step 10. Save shapefiles
+
+The original shapefile is resaved with the new filename and the tag "old" at the end. This file contains all the same variables as the new file, but is mapped to the original locations. The shapefile with the tag "new" is the same as the "old" shapefile, but maps to the new locations. The shapefile with the tag "buffer" contains the buffer areas from which the masked points were sampled. The only variables it contains are point_id (the location ID) and bound_id (the boundary ID). This shapefile is included in case it is useful for assessing the geomasking process.
+
+Files saved to the save folder if you followed the vignette:
+
+- geomasked_points_old.dbf  
+- geomasked_points_old.prj  
+- geomasked_points_old.shp  
+- geomasked_points_old.shx  
+- geomasked_points_new.dbf  
+- geomasked_points_new.prj  
+- geomasked_points_new.shp  
+- geomasked_points_new.shx  
+- geomasked_points_buffer.dbf  
+- geomasked_points_buffer.prj  
+- geomasked_points_buffer.shp  
+- geomasked_points_buffer.shx  
+
+The "flag" variable in the old and new buffers refers to the number of times boundaries had to be recalculated to create a valid area to select a masking point. Each time the buffering failed to create a valid area, the maximum and minimum values were recalculated as follows.
+
+- new maximum value = prior minimum value
+- new minimum value = half of prior minimum value
+
+For example, a flag value of 0 means the first buffer was valid. A flag of 2 means the buffer had to be recalculated twice to create a valid area.
+
+To map these files yourself after the geomasker finishes, you can use the following code. The first part reads in the shapefiles. The second part draws the map.
+
+```{r drawmap, eval = FALSE}
+myfilepath <- "c:/users/my_id/my_folder" # wherever you saved the files
+old <- sf::read_sf(dsn = myfilepath, layer = "geomasked_points_old")
+new <- sf::read_sf(dsn = myfilepath, layer = "geomasked_points_new")
+buffer <- sf::read_sf(dsn = myfilepath, layer = "geomasked_points_buffer")
+
+plot(sf::st_geometry(buffer[1:5,]), border = "green", col = rgb(0, 1, 0, .05))
+plot(sf::st_geometry(old[1:5,]), add = TRUE, pch = 20, col = "blue")
+plot(sf::st_geometry(new[1:5,]), add = TRUE, pch = 20, col = "red")
+```
+
+## Step 11. Save KML file
+
+In this step, nothing happens if you are following the vignette and selected "No" when asked if you wanted to save a KML file. If you had selected "Yes", a KML file and a KMZ (zipped KML) file would be created in this step that could then be opened in Google Earth. 
+
+Files saved to the save folder, if "Yes" was selected in Step 9:
+
+- geomasked_points.kml 
+- geomasked_points.kmz 
+
+
+## Step 12. Save log
+
+In this step, a text file is saved that includes all of your settings and some details about the geomasking variables. 
 
 
 File saved to the save folder if you followed the vignette:
 
-- hftown_agg6k15k_popwtplots.pdf (containing 5 maps)
-- hftown_agg6k15k_popwtsettings.Rdata
-
-
-
-## Step 22. Save original shapefile
-
-```{r pbold, out.width = '60%', fig.cap = 'Progress Bar: Save the Original Shapefile', echo = FALSE}
-knitr::include_graphics("images/pb_saveold.png")
-```
-
-The purpose of saving this shapefile is to provide a key/crosswalk (GATid) identifying which aggregated area each original area fell inside when aggregated. The GATflag variable flags areas that were excluded from aggregation or generated warnings in the log:
-
-- *value = 0:* no flag
-- *value = 1:* area excluded based on exclusion criteria
-- *value = 5:* area excluded because value of aggregation variable exceeded maximum value
-
-The original shapefile is saved with the following changes:
-
-- It is renamed to match the save filename you selected with "in" at the end and saved in the same folder as the aggregated shapefile.
-- The variables GATid and GATflag are appended to its dataframe.
-
-Files saved to the save folder if you followed the vignette:
-
-- hftown_agg6k15k_popwtin.dbf 
-- hftown_agg6k15k_popwtin.prj 
-- hftown_agg6k15k_popwtin.shp 
-- hftown_agg6k15k_popwtin.shx 
-
-## Step 23. Save aggregated shapefile
-
-```{r pbnew, out.width = '60%', fig.cap = 'Progress Bar: Save the Aggregated Shapefile', echo = FALSE}
-knitr::include_graphics("images/pb_savenew.png")
-```
-
-In this section, the aggregated shapefile is saved. It includes all of the variables in the original shapefile with these changes:
-
-- For categorical variables, the first option was selected for each merge.
-- For numeric variables, the values were summed unless the variables represented latitude or longitude (or x and y), in which case they were averaged.
-
-Additional variables created as part of the aggregation process and included in the shapefile's database:
-
-- **GATx:** longitude of area centroid (geographic unless population weighting was selected)
-- **GATy:** latitude of area centroid (geographic unless population weighting was selected)
-- **GATcratio:** compactness ratio for the area
-- **GATnumIDs:** The number of original areas that were merged into each aggregated area
-- **GATflag:** flag of areas that were excluded from aggregation or generated warnings in the log
-    - *value = 0:* no flag
-    - *value = 1:* area excluded based on exclusion criteria
-    - *value = 5:* area excluded because value of aggregation variable exceeded maximum value
-    - *value = 10:* value of area's aggregation variable is below minimum value, but no other areas are eligible for further aggregation
-
-Files saved to the save folder if you followed the vignette:
-
-- hftown_agg6k15k_popwt.dbf 
-- hftown_agg6k15k_popwt.prj 
-- hftown_agg6k15k_popwt.shp 
-- hftown_agg6k15k_popwt.shx 
-
-
-## Step 24. Save KML file
-
-```{r pbkml, out.width = '60%', fig.cap = 'Progress Bar: Save the KML File', echo = FALSE}
-knitr::include_graphics("images/pb_savekml.png")
-```
-
-In this step, nothing happens if you are following the vignette and selected no when asked if you wanted to save a KML file. If you had selected yes, a KML file would be created in this step that could then be opened in Google Earth. 
-
-Files saved to the save folder, if "Yes" was selected in Step 9:
-
-- hftown_agg6k15k_popwt.kml 
-
-
-## Step 25. Save log
-
-```{r pblog, out.width = '60%', fig.cap = 'Progress Bar: Save the Log of Your Run', echo = FALSE}
-knitr::include_graphics("images/pb_log.png")
-```
-
-In this step, a text file is saved that includes all of your settings, basic information on data distributions for the aggregation variable(s), and warnings regarding possible issues with the aggregation. 
-
-
-Files saved to the save folder if you followed the vignette:
-
-- hftown_agg6k15k_popwt.log
+- geomasked_points.log
 
 
 # GAT is finished, now what?
@@ -332,22 +298,32 @@ Files saved to the save folder if you followed the vignette:
 
 All files are saved to the save folder you selected. The log file contains a partial list of files created. The R console will display a full list of all files created and their location when the aggregation is complete, which will look something like this:
 
+```{r endmessage, eval = FALSE, echo = TRUE, warning = FALSE, message = FALSE}
+
 > The following files have been written to the folder  
 > C:/Users/ajs11/Documents/GAT:  
->   hftown_agg6k15k_popwt.dbf  
->   hftown_agg6k15k_popwt.prj  
->   hftown_agg6k15k_popwt.shp  
->   hftown_agg6k15k_popwt.shx  
->   hftown_agg6k15k_popwtin.dbf  
->   hftown_agg6k15k_popwtin.prj  
->   hftown_agg6k15k_popwtin.shp   
->   hftown_agg6k15k_popwtin.shx  
->   hftown_agg6k15k_popwtplots.pdf  
->   hftown_agg6k15k_popwt.log  
->   hftown_agg6k15k_popwtsettings.Rdata  
-> 
+> Shapefile of new locations:  
+>   geomasked_points_new.dbf  
+>   geomasked_points_new.prj  
+>   geomasked_points_new.shp  
+>   geomasked_points_new.shx  
+> Shapefile of old locations:  
+>   geomasked_points_old.dbf  
+>   geomasked_points_old.prj  
+>   geomasked_points_old.shp   
+>   geomasked_points_old.shx  
+> Shapefile of buffers, for assessment:  
+>   geomasked_points_buffer.dbf  
+>   geomasked_points_buffer.prj  
+>   geomasked_points_buffer.shp  
+>   geomasked_points_buffer.shx  
+> Additional assessment and process files:  
+>   geomasked_points_map.pdf  
+>   geomasked_points.log  
+>   geomasked_points_settings.Rdata  
+>   
 > See the log file for more details.
-
+```
 
 ## How to use your files
 
@@ -355,4 +331,4 @@ All files are saved to the save folder you selected. The log file contains a par
 - **KML file:** Open in Google Earth desktop or online.
 - **PDF file:** Open in any PDF reader.
 - **Log file:** Open in any text editor, such as Notepad++.
-- **R data file (\*.Rdata):** Open in R using the format `load("C:/filepath/settings.Rdata")`.
+- **R data file (\*.Rdata):** Open in R using the format `load("C:/filepath/myfile_settings.Rdata")`.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/selectGMdistances.R
 \name{selectGMdistances}
 \alias{selectGMdistances}
-\title{Select GeoMasking distances}
+\title{Select geoMasking distances}
 \usage{
 selectGMdistances(
   step = 3,

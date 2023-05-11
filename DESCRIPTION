@@ -6,7 +6,7 @@ Authors@R: c(
     person("Abigail", "Stamm", email = "abigail.stamm@health.ny.gov", 
       role = c("cre", "aut"), comment = "author of R package"),
     person("Gwen", "Babcock", email = "gdb02@health.state.ny.us", 
-      role = c("aut", "trl"), comment = "author of SAS and R scripts, 
+      role = c("aut", "trl"), comment = "author of R script, 
                                          contributed to technical notes"),
     person("New York State Department of Health / Health Research, Inc.", 
       role = c("cph")), 
@@ -30,4 +30,5 @@ Imports:
     tcltk
 Suggests: 
     knitr,
+    rmarkdown,
     tigris

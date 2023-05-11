@@ -15,7 +15,12 @@ runGMprogram(bgcol = "thistle1", buttoncol = "plum2", settings = NULL)
 Geomasker.}
 }
 \description{
-Run the geomasker
+This function runs the full geomasking tool.
+}
+\details{
+This function can read in an optional settings file from a prior run if,
+for example, you would like to run the geomasker with two different
+distances, but keep all other settings the same.
 }
 \examples{
 

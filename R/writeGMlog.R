@@ -1,6 +1,6 @@
 #' Write the geomasker log
 #'
-#' This function writes a log of the aggregation process. It reports the
+#' This function writes a log of the geomasking process. It reports the
 #' input and output datasets, variables and settings used, map projection,
 #' and program start and end times.
 #'
@@ -9,26 +9,29 @@
 #'                     function are the filename, filein, and the combined save
 #'                     path and save name, userout.
 #' @param mysettings   List of system settings, including version, pkgdate,
-#'                     starttime, and the booleans savekml and exists.
+#'                     starttime, and the booleans kml and exists.
 #' @param maskvars     List of settings for calculating masked locations.
-#' @param settingsfile R data file (*.Rdata) produced as part of GAT's output.
-#'                     This file saves all settings for GAT. Other options can
-#'                     be set to NULL only if this option is defined.
+#' @param settingsfile R data file (*.Rdata) produced as part of the
+#'                     geomasker's output. This file saves all settings for
+#'                     the geomasker. Other options can be set to NULL only if
+#'                     this option is defined.
 #'
+#' @details
 #'
 #' Notes on using the settingsfile option:
 #'
 #' 1. You will get an error if you moved the input shapefile before running
 #'    the function with this option, since the function needs to access the
 #'    input shapefile to recreate the log.
-#' 2. Reading in an *.Rdata file from a previous version of GAT may result in
-#'    incorrect elapsed time and GAT version numbers being written to the log,
-#'    or in errors that cause the file to be incomplete, due to changes in
-#'    settings saved to the *.Rdata file as GAT has evolved.
+#' 2. Reading in an *.Rdata file from a previous version of the geomasker may
+#'    result in incorrect elapsed time and geomasker version numbers being
+#'    written to the log, or in errors that cause the log file to be
+#'    incomplete, due to changes in settings saved to the *.Rdata file as the
+#'    geomasker has evolved.
 #'
 #' @examples
 #'
-#' # if you run this example, it saves "my_hftown.log" to your working
+#' # if you run this example, it saves "geomasked_points.log" to your working
 #' # directory
 #'
 #' if (interactive()) {
@@ -43,7 +46,7 @@
 #' )
 #'
 #' filevars <- list(
-#'   pointfile = "landmarks",     # original locations file
+#'   pointfile = "points",     # original locations file
 #'   pointpath = getwd(),         # original locations path
 #'   boundfile = "tracts",        # original boundary file
 #'   boundpath = getwd(),         # original boundary path
@@ -75,7 +78,9 @@
 
 writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
                        settingsfile = NULL) {
-  # set up ----
+  # rewrite to remove the need for the area file -
+  # only need it for projection, which I could save in settings
+  # set up ---
   if (!is.null(settingsfile)) {
     load(settingsfile)
     if (is.null(mysettings)) { # rerunning failed log
@@ -89,9 +94,9 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
   }
 
   # fill in full list of names below; code will error otherwise
-  vars <- names(data.frame(area[, 1:(ncol(area)-2)]))
+  vars <- names(data.frame(area))
   newvars <- c("point_id", "bound_id", "orig_lon", "orig_lat",
-               "mask_lon", "mask_lat", "flag")
+               "mask_lon", "mask_lat", "flag", "geometry")
   vars <- vars[!vars %in% newvars]
   oldvars <- ""
   for (i in 1:(length(vars)-3)) {
@@ -111,7 +116,7 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
                "\n  Date run:", as.character(as.Date(Sys.time())),
                "\n  Time tool took to run:",
                round(difftime(mysettings$endtime, mysettings$starttime, units = "mins"),
-                     digits = 2), "minutes", "\n")
+                     digits = 2), "minutes")
   write(logtext, file = logfile, ncolumns = length(logtext), append = FALSE)
 
   # input file ----
@@ -122,7 +127,7 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
                "\n  Identifier:        ", maskvars$point_id,
                "\n  Boundary file:     ", filevars$boundin,
                "\n  Boundary variable: ", maskvars$bound_id,
-               "\nOutput file:", filevars$userout)
+               "\nOutput file:         ", filevars$userout)
   write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
 
   # masking settings ----
@@ -135,16 +140,13 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
                maskvars$unit)
   write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
 
-
-
-
   # files ----
   if (!mysettings$exists) {
     logtext <- "\n  The shapefiles failed to save. "
     write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
   } else {
     # data dictionary ----
-    logtext <- c("\n  Aggregated shapefile:",
+    logtext <- c("\n  Variables created by the geomasking process:",
                  paste0(filevars$fileout, ".shp"),
                  "\n    Variables created by GAT:",
                  "\n        point_id:", "duplicate of original locations identifier,",
@@ -155,28 +157,37 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
                  "\n        orig_lon:", "original location longitude",
                  "\n        mask_lat:", "shifted location latitude",
                  "\n        mask_lon:", "shifted location longitude",
-                 "\n        flag:    ", "number corresponds to the number of times boundaries ",
-                 "\n                 ", "had to be recalculated to create a valid area to ",
-                 "\n                 ", "select a masking point using the equation",
+                 "\n        flag:    ", "number corresponds to the number of times buffers had ",
+                 "\n                 ", "to be recalculated to create a valid area to select a ",
+                 "\n                 ", "masking point using the equation",
                  "\n                 ", "  new maximum value = prior minimum value",
                  "\n                 ", "  new minimum value = half of prior minimum value",
-                 "\n                 ", "e.g. flag = 2 means boundaries had to be recalculated twice")
+                 "\n                 ", "e.g. flag = 2 means buffers had to be recalculated twice")
     write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
 
     # saved files ----
+    oshp <- paste(filevars$pointfile, "shp", sep = ".")
+    bshp <- paste(filevars$boundfile, "shp", sep = ".")
+    orshp <- paste(paste(filevars$pointfile, "old", sep = "_"), "shp", sep = ".")
+    nshp <- paste(paste(filevars$pointfile, "new", sep = "_"), "shp", sep = ".")
+    bshp <- paste(paste(filevars$pointfile, "buffer", sep = "_"), "shp", sep = ".")
+
     logtext <- c("All files have been saved to", filevars$pathout,
-                 "\n  Original shapefile:  ", paste(filevars$pointfile, "shp", sep = "."),
-                 "\n  Original shapefile with both original and masked latitude and longitude:",
-                 "\n                       ", paste(paste(filevars$fileout, "old", sep = "_"), "shp", sep = "."),
-                 "\n  Masked shapefile:    ", paste(filevars$fileout, "shp", sep = "."))
+                 "\n  Original shapefile:  ", oshp,
+                 "\n  Boundary shapefile:  ", bshp,
+                 "\n  Original shapefile with both original and masked",
+                 "latitude and longitude:",
+                 "\n                       ", orshp,
+                 "\n  Masked shapefile:    ", nshp,
+                 "\n  Buffer shapefile:    ", bshp)
     write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
   }
   logtext <- c("\n  Maps:                ",
-               paste0(filevars$fileout, "plots.pdf"),
+               paste(filevars$fileout, "map.pdf", sep = "_"),
                "\n  Log file:            ",
                paste0(filevars$fileout, ".log"),
                "\n  R settings file:     ",
-               paste0(filevars$fileout, "settings.Rdata"))
+               paste(filevars$fileout, "settings.Rdata", sep = "_"))
   write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
   if (mysettings$kml) {
     logtext <- c("\n  KML file (raw):    ",

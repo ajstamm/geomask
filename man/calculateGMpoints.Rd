@@ -12,7 +12,18 @@ calculateGMpoints(myshps, maskvars)
 \item{maskvars}{List of settings for calculating masked locations.}
 }
 \description{
-Calculate geomasked points
+This function reads in the location layer, calculates a valid buffer around
+each point, and samples a random point from within the buffer. Two new
+layers are added to the layer list in myshps: (1) a layer of masked points
+and (2) a layer of corresponding buffers for assessment.
+}
+\details{
+If any buffers contain no valid points, those points are processed again
+with the maximum distance revised to equal the minimum distance and the
+minimum distance divided by 2. This process is repeated as many times as
+necessary to produce a valid buffer. The number of repeats needed is saved
+in the flag variable in both layers produced. (A flag of 0 means the first
+buffer contained valid points to sample.)
 }
 \examples{
 
@@ -28,10 +39,7 @@ ot <- tigris::tracts("NY", "Onondaga", year = 2010)
 ol <- tigris::landmarks("NY", "point", year = 2015)
 t <- sf::st_contains(ot, ol) |> unlist()
 ol <- ol[t, ]
-myshps <- list(
-  point = ol,
-  bound = ot
-)
+myshps <- list(point = ol, bound = ot)
 
 myshps <- calculateGMpoints(myshps = myshps, maskvars = maskvars)
 

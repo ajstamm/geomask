@@ -5,6 +5,15 @@
 #' @param bgcol      Text string containing UI background color.
 #' @param buttoncol  Text string containing UI button color.
 #'
+#' @description
+#' This function runs the full geomasking tool.
+#'
+#' @details
+#' This function can read in an optional settings file from a prior run if,
+#' for example, you would like to run the geomasker with two different
+#' distances, but keep all other settings the same.
+#'
+#'
 #'
 #' @examples
 #'
@@ -20,11 +29,6 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
                          settings = NULL) {
 
   #---- settings ----
-  # add ways to define and include point ID and boundary ID by name
-  mysettings <- list(version = "1.4.0", # packageDescription("geomask")$Version,
-                     pkgdate = "2023-04-17", # packageDescription("geomask")$Date,
-                     starttime = Sys.time()) # needed for the log
-
   # pre-load lists
   myshps <- list()
   temp <- list(quit = FALSE, backopt = TRUE)
@@ -34,6 +38,9 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
   if (!is.null(settings)) {
     load(settings)
     step <- 6
+    mysettings$version = "1.4.0" # packageDescription("geomask")$Version,
+    mysettings$pkgdate = "2023-04-17" # packageDescription("geomask")$Date,
+    mysettings$starttime = Sys.time()
     filevars$userout <- paste0(filevars$userout, "_2")
     filevars$fileout <- paste0(filevars$fileout, "_2")
     myshps$point <- sf::st_read(dsn = filevars$pointpath,
@@ -43,16 +50,17 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
   } else {
     maskvars <- list(min = 100, max = 1000, unit = "meters")
     filevars <- list(pointin = "", boundin = "")
+    # add ways to define and include point ID and boundary ID by name
+    mysettings <- list(version = "1.4.0", # packageDescription("geomask")$Version,
+                       pkgdate = "2023-04-17", # packageDescription("geomask")$Date,
+                       starttime = Sys.time()) # needed for the log
   }
 
-
-
-
-
   #---- progress bar ----
-  pb <- list(title = paste("NYSDOH Geomask Tool",
+  pb <- list(title = paste("NYSDOH Geomasking Tool",
                            mysettings$version, mysettings$date),
-             label = "NYSDOH Geomask Tool is running. Please wait for dialogs.")
+             label = paste("The NYSDOH Geomasking Tool is running.\n",
+                           "Please wait for dialogs."))
   tpb <- tcltk::tkProgressBar(title = pb$title, label = pb$label, min = 0,
                               max = 10, initial = 0, width = 400)
 
@@ -67,9 +75,12 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
       tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                               label = pb$label)
 
-      temp$msg <- "Select the shapefile to mask"
+      temp$msg <- "Select the shapefile you wish to mask"
       temppath <- gatpkg::locateGATshapefile(myfile = filevars$pointin,
-                                             step = step, msg = temp$msg)
+                                             myprogram = "the geomasker",
+                                             step = step, msg = temp$msg,
+                                             bgcol = bgcol,
+                                             buttoncol = buttoncol)
       filevars$pointin <- temppath$userin
       filevars$pointfile <- temppath$filein
       filevars$pointpath <- temppath$pathin
@@ -105,7 +116,8 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
             myshps$point <- sf::st_transform(myshps$point, 4326)
           }
 
-          temp$msg <- paste("Please select the variable that \nidentifies your locations.")
+          temp$msg <- paste("Please select the variable that",
+                            "\nidentifies your locations.")
           temp$hlp <- paste0("Select your location ID variable. \n",
                              "  \u2022  To continue,  click 'Next >'. \n",
                              "  \u2022  To quit the geomasker, click 'Cancel'.")
@@ -147,7 +159,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
     #---- step 2: request boundary shapefile ----
     # request boundary variable/ID or create one
     while (step == 2 & !temp$quit) {
-      pb <- list(title = "NYSDOH Geomask Tool: identify boundary file",
+      pb <- list(title = "NYSDOH Geomasking Tool: identify boundary file",
                  label = "Identifying and selecting the boundary shapefile.")
       tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                               label = pb$label)
@@ -187,7 +199,8 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
           # myshps$bound <- dplyr::mutate(myshps$bound, bound_id = dplyr::row_number())
           # myshps$bound <- dplyr::select(myshps$bound, bound_id)
 
-          msg <- paste("Please select the variable that \nidentifies boundaries within",
+          msg <- paste("Please select the variable that",
+                       "\nidentifies boundaries within",
                        "\nwhich your points should be relocated.")
           hlp <- paste0("Select your boundary variable. \n",
                         "  \u2022  To continue,  click 'Next >'. \n",
@@ -230,7 +243,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
 
     #---- step 3: min/max distance ----
     while (step == 3 & !temp$quit) {
-      pb <- list(title = "NYSDOH Geomask Tool: select distances",
+      pb <- list(title = "NYSDOH Geomasking Tool: select distances",
                  label = "Selecting the minimum and maximum distances.")
       tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                               label = pb$label)
@@ -295,25 +308,12 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
           }
         }
       }
-      if (step == 4) {
-        # convert max and min values to meters
-        if (maskvars$unit == "kilometers") {
-          maskvars$min <- maskvars$min * 1000
-          maskvars$max <- maskvars$max * 1000
-        } else if (maskvars$unit == "miles") {
-          maskvars$min <- maskvars$min * 1609.344
-          maskvars$max <- maskvars$max * 1609.344
-        } else if (maskvars$unit == "feet") {
-          maskvars$min <- maskvars$min / 3.2808399
-          maskvars$max <- maskvars$max / 3.2808399
-        }
-      }
       rm(templist)
     }
 
     #---- step 4: kml ----
     while (step == 4 & !temp$quit) {
-      pb <- list(title = "NYSDOH GAT: save KML?",
+      pb <- list(title = "NYSDOH Geomasking Tool: save KML?",
                  label = "Identifying whether to save a KML file.")
       tcltk::setTkProgressBar(tpb, value = step, title = pb$title, label = pb$label)
 
@@ -325,7 +325,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
         if (mysettings$kml == "Yes") {
           mysettings$kml <- TRUE # save the kml
         } else {
-          mysettings$kml <- FALSE # save the kml
+          mysettings$kml <- FALSE # don't save the kml
         }
         if (!temp$backopt) {
           step <- 7
@@ -343,7 +343,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
     #---- step 5: save location ----
     while (step == 5 & !temp$quit) {
       # identify the save files' name and location
-      pb <- list(title = "NYSDOH GAT: identify save file",
+      pb <- list(title = "NYSDOH Geomasking Tool: identify save file",
                  label = "Identifying the name and location of your save file.")
       tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                               label = pb$label)
@@ -366,7 +366,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
 
     #---- step 6: confirmation ----
     while (step == 6 & !temp$quit) {
-      pb <- list(title = "NYSDOH Geomask Tool: confirm settings",
+      pb <- list(title = "NYSDOH Geomasking Tool: confirm settings",
                  label = "Confirming your geomasking settings.")
       tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                               label = pb$label)
@@ -397,20 +397,22 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
 
   #---- automatic processing ----
   if (!mysettings$quit) {
-    # calculate points ----
+    # calculate locations ----
     # at this point, step = 7
-    pb <- list(title = "NYSDOH Geomask Tool: shift points",
-               label = "Shifting points within their boundaries.")
+    pb <- list(title = "NYSDOH Geomasking Tool: shift locations",
+               label = "Shifting locations within their boundaries.")
     tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                             label = pb$label)
 
     set.seed(mysettings$starttime)
     myshps <- calculateGMpoints(myshps = myshps, maskvars = maskvars)
 
-    # plot points ----
+
+
+    # plot locations ----
     step <- step + 1 # 8
-    pb <- list(title = "NYSDOH Geomask Tool: plot points",
-               label = "Plotting the original and shifted points.")
+    pb <- list(title = "NYSDOH Geomasking Tool: plot locations",
+               label = "Plotting the original and shifted locations.")
     tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                             label = pb$label)
 
@@ -419,18 +421,21 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
 
     # save files ----
     step <- step + 1 # 9
-    pb <- list(title = "NYSDOH Geomask Tool: save files",
+    pb <- list(title = "NYSDOH Geomasking Tool: save files",
                label = "Saving your files.")
     tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                             label = pb$label)
 
-    # save shapefile(s)
-    # write resulting shapefile(s)
+    # save shapefiles
+    temp$newfile = paste(filevars$fileout, "new", sep = "_")
     temp$oldfile = paste(filevars$fileout, "old", sep = "_")
+    temp$bufferfile = paste(filevars$fileout, "buffer", sep = "_")
     sf::write_sf(myshps$old_full, dsn = filevars$pathout,
                  layer = temp$oldfile, driver = "ESRI shapefile")
+    sf::write_sf(myshps$buffer, dsn = filevars$pathout,
+                 layer = temp$bufferfile, driver = "ESRI shapefile")
     sf::write_sf(myshps$new_full, dsn = filevars$pathout,
-                 layer = filevars$fileout, driver = "ESRI shapefile")
+                 layer = temp$newfile, driver = "ESRI shapefile")
 
     # save kml if desired
     if (mysettings$kml) { # now includes descriptions
@@ -439,13 +444,13 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
     }
 
     # save plot(s)
-    grDevices::pdf(paste0(filevars$userout, "plots.pdf"), onefile=TRUE,
+    grDevices::pdf(paste(filevars$userout, "map.pdf", sep = "_"), onefile=TRUE,
                    width = 10, height = 7)
     grDevices::replayPlot(myplot)
     grDevices::dev.off() # need to close pdf file
 
     # save settings
-    save(file = paste0(filevars$userout, "settings.Rdata"),
+    save(file = paste(filevars$userout, "settings.Rdata", sep = "_"),
          list = c("filevars", "maskvars", "mysettings"))
 
 
@@ -459,14 +464,14 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
 
     # print message ----
     step <- step + 1 # 10
-    pb <- list(title = "NYSDOH Geomask Tool: finish",
+    pb <- list(title = "NYSDOH Geomasking Tool: finish",
                label = "The program has completed.")
     tcltk::setTkProgressBar(tpb, value = step, title = pb$title,
                             label = pb$label)
 
 
     if (mysettings$exists) {
-      msg <- paste0("The Geoomasker is finished. Your files were saved to ",
+      msg <- paste0("The geomasker is finished. Your files were saved to ",
                     filevars$pathout,
                     ". \nPlease see the log file for more details.")
       tcltk::tkmessageBox(title = "Program finished", type = "ok",
@@ -474,20 +479,29 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
 
       msg <- paste0("\n\nThe following files have been written to the folder \n",
                     filevars$pathout, ": \n  ",
-                    filevars$fileout, ".dbf \n  ",
-                    filevars$fileout, ".prj \n  ",
-                    filevars$fileout, ".shp \n  ",
-                    filevars$fileout, ".shx \n  ",
+                    "Shapefile of new locations:  \n  ",
+                    filevars$fileout, "_new.dbf \n  ",
+                    filevars$fileout, "_new.prj \n  ",
+                    filevars$fileout, "_new.shp \n  ",
+                    filevars$fileout, "_new.shx \n",
+                    "Shapefile of old locations:  \n  ",
                     filevars$fileout, "_old.dbf \n  ",
                     filevars$fileout, "_old.prj \n  ",
                     filevars$fileout, "_old.shp \n  ",
-                    filevars$fileout, "_old.shx \n  ",
-                    filevars$fileout, "plots.pdf \n  ",
+                    filevars$fileout, "_old.shx \n",
+                    "Shapefile of buffers, for assessment: \n  ",
+                    filevars$fileout, "_buffer.dbf \n  ",
+                    filevars$fileout, "_buffer.prj \n  ",
+                    filevars$fileout, "_buffer.shp \n  ",
+                    filevars$fileout, "_buffer.shx \n",
+                    "Additional assessment and process files: \n  ",
+                    filevars$fileout, "_map.pdf \n  ",
                     filevars$fileout, ".log \n  ",
-                    filevars$fileout, "settings.Rdata \n  ")
+                    filevars$fileout, "_settings.Rdata \n")
 
       if (mysettings$kml==TRUE) {
         msg <- paste0(msg,
+                      "KML files: \n  ",
                       filevars$fileout, ".kml \n  ",
                       filevars$fileout, ".kmz \n")
       }
@@ -501,12 +515,9 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
                           icon = "error", message = msg)
     }
 
-
-
-
   } else {
     # "else" occurs only if geomasking is cancelled in the input phase
-    msg <- "You have chosen to cancel the Geomasker."
+    msg <- "You have chosen to cancel the geomasker."
     tcltk::tkmessageBox(title = "Process cancelled",
                         message = msg, type = "ok", icon = "warning")
   }

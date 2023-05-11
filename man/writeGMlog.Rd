@@ -2,7 +2,7 @@
 % Please edit documentation in R/writeGMlog.R
 \name{writeGMlog}
 \alias{writeGMlog}
-\title{Write GAT Log}
+\title{Write the geomasker log}
 \usage{
 writeGMlog(
   area = NULL,
@@ -22,32 +22,34 @@ function are the filename, filein, and the combined save
 path and save name, userout.}
 
 \item{mysettings}{List of system settings, including version, pkgdate,
-starttime, and the booleans savekml and exists.}
+starttime, and the booleans kml and exists.}
 
-\item{settingsfile}{R data file (*.Rdata) produced as part of GAT's output.
-This file saves all settings for GAT. Other options can
-be set to NULL only if this option is defined.
-
+\item{settingsfile}{R data file (*.Rdata) produced as part of the
+geomasker's output. This file saves all settings for
+the geomasker. Other options can be set to NULL only if
+this option is defined.}
+}
+\description{
+This function writes a log of the geomasking process. It reports the
+input and output datasets, variables and settings used, map projection,
+and program start and end times.
+}
+\details{
 Notes on using the settingsfile option:
 \enumerate{
 \item You will get an error if you moved the input shapefile before running
 the function with this option, since the function needs to access the
 input shapefile to recreate the log.
-\item Reading in an *.Rdata file from a previous version of GAT may result in
-incorrect elapsed time and GAT version numbers being written to the log,
-or in errors that cause the file to be incomplete, due to changes in
-settings saved to the *.Rdata file as GAT has evolved.
-}}
+\item Reading in an *.Rdata file from a previous version of the geomasker may
+result in incorrect elapsed time and geomasker version numbers being
+written to the log, or in errors that cause the log file to be
+incomplete, due to changes in settings saved to the *.Rdata file as the
+geomasker has evolved.
 }
-\description{
-This function writes a log of the aggregation process. It reports the
-input and output datasets, variables and settings used, distributions of
-aggregation variables, map projection, program start and end times, and
-any warnings that were generated.
 }
 \examples{
 
-# if you run this example, it saves "my_hftown.log" to your working
+# if you run this example, it saves "geomasked_points.log" to your working
 # directory
 
 if (interactive()) {
@@ -62,7 +64,7 @@ maskvars <- list(
 )
 
 filevars <- list(
-  pointfile = "landmarks",     # original locations file
+  pointfile = "points",     # original locations file
   pointpath = getwd(),         # original locations path
   boundfile = "tracts",        # original boundary file
   boundpath = getwd(),         # original boundary path

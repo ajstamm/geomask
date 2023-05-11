@@ -3,6 +3,23 @@
 #' @param myshps    List of shapefiles
 #' @param maskvars  List of settings for calculating masked locations.
 #'
+#' @description
+#'
+#'
+#' This function reads in the location layer, calculates a valid buffer around
+#' each point, and samples a random point from within the buffer. Two new
+#' layers are added to the layer list in myshps: (1) a layer of masked points
+#' and (2) a layer of corresponding buffers for assessment.
+#'
+#' @details
+#' If any buffers contain no valid points, those points are processed again
+#' with the maximum distance revised to equal the minimum distance and the
+#' minimum distance divided by 2. This process is repeated as many times as
+#' necessary to produce a valid buffer. The number of repeats needed is saved
+#' in the flag variable in both layers produced. (A flag of 0 means the first
+#' buffer contained valid points to sample.)
+#'
+#'
 #' @examples
 #'
 #' maskvars <- list(
@@ -17,10 +34,7 @@
 #' ol <- tigris::landmarks("NY", "point", year = 2015)
 #' t <- sf::st_contains(ot, ol) |> unlist()
 #' ol <- ol[t, ]
-#' myshps <- list(
-#'   point = ol,
-#'   bound = ot
-#' )
+#' myshps <- list(point = ol, bound = ot)
 #'
 #' myshps <- calculateGMpoints(myshps = myshps, maskvars = maskvars)
 #'
@@ -45,6 +59,18 @@ calculateGMpoints <- function(myshps, maskvars) {
 
   myshps$buffer <- data.frame(ID = numeric())
   myshps$shifted <- data.frame(ID = numeric())
+
+  # convert max and min values to meters
+  if (maskvars$unit == "kilometers") {
+    maskvars$min <- maskvars$min * 1000
+    maskvars$max <- maskvars$max * 1000
+  } else if (maskvars$unit == "miles") {
+    maskvars$min <- maskvars$min * 1609.344
+    maskvars$max <- maskvars$max * 1609.344
+  } else if (maskvars$unit == "feet") {
+    maskvars$min <- maskvars$min / 3.2808399
+    maskvars$max <- maskvars$max / 3.2808399
+  }
 
   temp <- list(max = maskvars$max,
                min = maskvars$min,
@@ -73,7 +99,7 @@ calculateGMpoints <- function(myshps, maskvars) {
         temp$shift1$bound_id <- temp$bufmin1$bound_id
         temp$shift1$mask_lon <- sf::st_coordinates(temp$shift1)[,1]
         temp$shift1$mask_lat <- sf::st_coordinates(temp$shift1)[,2]
-        temp$shift1$flag <- temp$iter
+        temp$shift1$flag <- temp$int1$flag <- temp$iter
         if (nrow(myshps$buffer) == 0) {
           myshps$buffer <- temp$int1
           myshps$shifted <- temp$shift1
@@ -101,6 +127,9 @@ calculateGMpoints <- function(myshps, maskvars) {
   temp$inter <- data.frame(myshps$intersect)[, c(vars, "orig_lon", "orig_lat")]
   myshps$new_full <- dplyr::full_join(myshps$shifted, temp$inter,
                                       by = c("point_id", "bound_id"))
+  myshps$buffer <- myshps$buffer |>
+    dplyr::select(!!dplyr::sym("point_id"), !!dplyr::sym("bound_id"),
+                  !!dplyr::sym("flag"))
 
   return(myshps)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotGMcompare.R
 \name{plotGMcompare}
 \alias{plotGMcompare}
-\title{Plot GM Comparison Map}
+\title{Plot the geomasker comparison map}
 \usage{
 plotGMcompare(
   bound,
@@ -26,10 +26,9 @@ minimum, and maximum values.}
 the map is drawn and saved.}
 }
 \description{
-This function draws two maps on top of each other with only the polygon
-boundaries visible, so that polygon sizes and compositions can be compared.
-It is designed to be saved to a recordPlot object for later rendering in a
-PDF rather than displayed directly.
+This function draws two maps on top of each other, so that point locations
+can be compared. It is designed to be saved to a recordPlot object for
+later rendering in a PDF rather than displayed directly.
 }
 \details{
 If plotting directly, the display may be distorted. For best results, save
