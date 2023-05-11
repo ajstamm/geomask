@@ -1,0 +1,377 @@
+#purpose of this R script is to take an input shapefile of points
+#and randomly move the points a specified distance
+#and output the corresponding shapefile and KML file
+#Programmed in R2.13.0 for Windows XP
+#by Gwen LaSelva, June 2011
+
+#eventually, add features to keep the points within an area
+#and to make the distance the point is moved depend on population density
+#non default libraries needed: sp, rgdal to read in shapefile
+#tcktk and svDialogs for GUI
+
+#load default libraries. Need this to run as batch.
+#currently requires shapefiles to be in lat/long
+#might want to look at function spTransform() to change projection if needed
+
+library(datasets)
+library(utils)
+
+setWindowTitle(":  NYSDOH Point Pertubation Tool") #adds this as a suffix to the usual window title
+
+setStatusBar("NYSDOH Point Pertubation Tool is running.  Please wait for dialogs.")
+
+
+library(grDevices)
+library(graphics)
+library(stats)
+library(methods)
+#library(gpclib) #in case not automaticaly loaded
+if(exists("gpclibPermit")==TRUE){gpclibPermit()} #might be disabled by default, this enables it
+library(svDialogs) #for guiDlgOpen, it needs svMisc
+library(rgdal)
+library(tcltk)
+#tclRequire("BWidget")
+step<-1
+
+###########################################################################
+#custom dialog function to input distance (free text) and distance units (from dropdown)
+#uses R package tclTk
+#list of function arguments: gattitle, gatmessage,gathelpfile,gatdefault
+#fuction returns eiether "go back" or free text, and data field selection, and unit selection
+#	(3 items)
+###############################################################################
+#this function from /pkg/svMisc/R/TempEnv.R, needed for gatgui and gatInput functions
+TempEnv <-
+function() {
+    pos <-  match("TempEnv", search())
+    if (is.na(pos)) { # Must create it
+        TempEnv <- list()
+        attach(TempEnv, pos = length(search()) - 1)
+        rm(TempEnv)
+        pos <- match("TempEnv", search())
+    }
+    return(pos.to.env(pos))
+}
+gatInput<-function(gattitle="GAT input window",gathelpfile=paste("file://",getwd(),"/help/Point Random Pertubation Tool help.htm",sep=""),
+	gatdefault="default text",gatmessage="Please enter something in the box",dd1choices=c("NONE","some"),dd2choices=c("m","km","mi")){
+#use this function for free text input, like the minimum values
+assign("res.inbox",value=character(0),envir=TempEnv())
+assign("res2.inbox",value=dd1choices[1],envir=TempEnv())
+assign("res3.inbox",value=dd1choices[1],envir=TempEnv())
+
+    inbox <- tktoplevel()
+    tktitle(inbox) <- gattitle
+    wlabel <- tklabel(inbox, text = gatmessage)
+    varText <- tclVar(gatdefault)
+    wtext <- tkentry(inbox, width = "20", textvariable = varText)
+    onOk <- function() {
+	  fav <- tclvalue(dd1pick)
+	    worst <- tclvalue(dd2pick)
+        assign(".res.inbox",value=tclvalue(varText),envir=TempEnv())
+	  assign(".res2.inbox",value=fav,envir=TempEnv())
+	  assign(".res3.inbox",value=worst,envir=TempEnv())
+        tkdestroy(inbox)
+        return(res.inbox)
+    }
+    onCancel<-function(){tkdestroy(inbox);quit(save="no")}
+    OnBack<-function(){
+    assign(".res.inbox", "go back", envir = TempEnv())
+    tkdestroy(inbox)}
+    OnHelp <- function(){browseURL(gathelpfile)}
+    #butFrame <- tkframe(inbox)
+    wbutOK <- tkbutton(inbox, text = "  Next>  ", width = "12", command = onOk, 
+        default = "active")
+    #wlabSep <- tklabel(butFrame, text = " ")
+    wbutCancel <- tkbutton(inbox, text = "Cancel", width = "12", 
+        command = onCancel)
+
+help.but <- tkbutton(inbox,text="  Help  ",width=12,command=OnHelp)
+back.but <- tkbutton(inbox,text=" <Back  ",width=12,command=OnBack)
+
+dd1pick<-tclVar(dd1choices[1]) #default selection is first in list
+tl1 <- ttkcombobox(inbox, values=dd1choices, textvariable=dd1pick, state="readonly") 
+
+dd2pick <- tclVar(dd2choices[1]) #default selection is first in list
+tl2 <- ttkcombobox(inbox, values=dd2choices, textvariable=dd2pick, state="readonly") 
+
+label1<-tklabel(inbox,text="or get maximum distance from data:")
+label2<-tklabel(inbox,text="units:")
+    tkgrid(wlabel, column=0,row=0,sticky = "w", padx = 5, pady = 5) #label above free entry box
+    tkgrid(wtext, column=0,row=1,sticky="e",padx = 5, pady = 5)
+    tkgrid(label1, column=1,row=1, sticky="e",padx = 5, pady = 5) #text label for dropdown
+    tkgrid(tl1,column=2,row=1, sticky="w",padx = 5, pady = 5)#dropdown
+
+    tkgrid(label2,column=0,row=2, sticky="e", padx=5, pady=5) #select units text
+    tkgrid(tl2, column=1,row=2,sticky="w", padx=5, pady=5) #select units dropdown
+
+    tkgrid(back.but,column=0,row=4,sticky = "e",padx=5,pady=5) #add extra buttons
+    tkgrid(wbutOK,column=1,row=4,sticky = "w",padx=5,pady=5) #add extra buttons
+    tkgrid(wbutCancel,column=2,row=4,sticky = "w",padx=5,pady=5) #add extra buttons
+    tkgrid(help.but,column=3,row=4,sticky = "e",padx=5,pady=5) #add extra buttons
+
+    #tkgrid(butFrame, pady = 5,padx=5)
+
+
+    #for (row in 0:2) tkgrid.rowconfigure(inbox, row, weight = 0)
+    #for (col in 0:0) tkgrid.columnconfigure(inbox, col, weight = 0)
+    .Tcl("update idletasks")
+    tkwm.resizable(inbox, 0, 0)
+    tkbind(inbox, "<Return>", onOk)
+    tkwm.deiconify(inbox)
+    tkfocus(wtext)
+    tkselection.from(wtext, "0")
+    tkselection.to(wtext, as.character(nchar(gatdefault)))
+    tkicursor(wtext, as.character(nchar(gatdefault)))
+    tkwait.window(inbox)
+    res<-get(".res.inbox", envir=TempEnv(), inherits=FALSE)
+    res2<-get(".res2.inbox", envir=TempEnv(), inherits=FALSE)
+    res3<-get(".res3.inbox",envir=TempEnv(), inherits=FALSE)
+    remove(res.inbox,envir=TempEnv(),inherits=FALSE)
+    remove(res2.inbox,envir=TempEnv(),inherits=FALSE)
+    remove(res3.inbox,envir=TempEnv(),inherits=FALSE)
+    choices=c(res,res2,res3)
+    return(choices)
+}#end gatInput function
+#####################################################################
+#end custom dialog function
+####################################################################
+
+
+while(step<100){#get user input until finalized
+##prompt user for point file
+if(step==1){setStatusBar(paste("NYSDOH Point Pertubation Tool: Looking for point file."))
+
+userfile<-guiDlgOpen(title = "Select Shapefile of Points to move", defaultFile = "pointstomove_point.shp", defaultDir = getwd(), multi=FALSE, filters=c("Shapefiles (*.shp)","*.shp"))
+if(length(userfile)==0){quit(save="no")} #this will happend if you hit cancel
+
+#remove extension if present
+periodloc<-regexpr(".",userfile,fixed=TRUE) #will be -1 if no match, otherwise location(s) of matches
+if(periodloc>0){userfile<-substr(userfile,1,periodloc[1]-1)}
+
+checkfile=file.access(paste(userfile,".shp",sep=""),mode=4) #-1 for bad, 0 for OK
+
+if(checkfile==0){#found shapefile}
+#if found good shapefile
+}else{#else needs to be on the same line as bracket so R knows the statement continues
+print("Sorry, couldn't find point shapefile")
+guiDlgMessage("Sorry, couldn't find your point shapefile", title = "File error",type="ok",icon="error")
+quit(save="no")
+}##end prompt user for point file
+
+#get point file
+#find input file name and path
+slashloc=max(unlist(gregexpr("/",userfile,fixed=TRUE))) #find location of last slash, divides path and file name
+userfilein<-substr(userfile,slashloc+1,nchar(userfile))
+userpathin<-substr(userfile,1,slashloc-1)
+
+mypoints.shp<-readOGR(dsn=userpathin,layer=userfilein) #reads it in as spatialpolygonsdataframe with projection information
+#get a list of all numeric fields
+listitems<-names(mypoints.shp@data)
+listtype<-sapply(mypoints.shp@data,class)
+listtype[listtype=="factor"]<-FALSE
+listtype[listtype=="character"]<-FALSE
+listtype[listtype=="integer"]<-TRUE
+listtype[listtype=="numeric"]<-TRUE
+numlistitems<-listitems[listtype==TRUE]
+
+##prompt user for boundary file within which to keep points when they are moved
+setStatusBar(paste("NYSDOH Point Pertubation Tool: Looking for boundary file."))
+
+userfileb<-guiDlgOpen(title = "Select Shapefile of boundaries to keep points in", defaultFile = "ALBA2010m_region.shp", defaultDir = getwd(), multi=FALSE, filters=c("Shapefiles (*.shp)","*.shp"))
+
+if(length(userfileb)==0){quit(save="no")}
+#remove extension if present
+periodloc<-regexpr(".",userfileb,fixed=TRUE) #will be -1 if no match, otherwise location(s) of matches
+if(periodloc>0){userfileb<-substr(userfileb,1,periodloc[1]-1)}
+
+checkfile=file.access(paste(userfileb,".shp",sep=""),mode=4) #-1 for bad, 0 for OK
+
+if(checkfile==0){#found shapefile}
+#if found good shapefile
+}else{#else needs to be on the same line as bracket so R knows the statement continues
+print("Sorry, couldn't find boundary shapefile")
+guiDlgMessage("Sorry, couldn't find your boundary shapefile", title = "File error",type="ok",icon="error")
+quit(save="no")
+}##end prompt user for point file
+
+#get boundary file
+#find input file name and path
+slashloc=max(unlist(gregexpr("/",userfileb,fixed=TRUE))) #find location of last slash, divides path and file name
+userfileinb<-substr(userfileb,slashloc+1,nchar(userfileb))
+userpathinb<-substr(userfileb,1,slashloc-1)
+
+mybound.shp<-readOGR(dsn=userpathinb,layer=userfileinb)
+step<-2 
+
+#find if these maps are lat/long or not
+#myproj<-proj4string(nytown.shp)=="+proj=longlat"
+myproj<-grepl("longlat",proj4string(mypoints.shp),fixed=TRUE) #returns logical vector
+myprojb<-grepl("longlat",proj4string(mybound.shp),fixed=TRUE) #returns logical vector
+if(is.na(myproj)){myproj<-FALSE} #default to not lat/long if something goes wrong
+if(is.na(myprojb)){myprojb<-FALSE} #default to not lat/long if something goes wrong
+if(myproj==FALSE){guiDlgMessage("Sorry, the point file must be in latitude/longitude",title="Unsuitable Projection",type="ok",icon="error")
+quit(save="no")}
+if(myprojb==FALSE){guiDlgMessage("Sorry, the boundary file must be in latitude/longitude",title="Unsuitable Projection",type="ok",icon="error")
+quit(save="no")}
+#if projection is lat/lon, myproj=TRUE, otherwise FALSE
+
+}#end step 1
+
+if(step==2){userdist<-1000 #in meters, fornow
+
+setStatusBar(paste("NYSDOH Point Pertubation Tool: enter maximum distance to move points"))
+
+userdistc<-gatInput(gatmessage=paste("Enter maximum distance:"), gattitle = "Maximum distance to move points", gatdefault = as.character(userdist),gathelpfile=paste("file://",getwd(),"/help/movepointshelp.html",sep=""),dd1choices=c("NONE",numlistitems),dd2choices=c("m","ft","km","mi"))
+
+if(userdistc[2]=="NONE"){userdist<-as.numeric(userdistc[1])}
+else{userdist<-mypoints.shp@data[,userdistc[2]]}
+
+while(class(userdist)!="numeric"&&userdistc[1]!="go back"){
+userdistc<-gatInput(gatmessage = paste("Please reenter maximum distance to move points"), gattitle = "Maximum distance", gatdefault = "1000",gathelpfile=paste("file://",getwd(),"/help/movepointshelp.html",sep=""))
+}#end while
+
+#convert units to meters if needed
+if(userdistc[3]=="km"){userdist<-userdist*1000}
+if(userdistc[3]=="mi"){userdist<-userdist*1609.344}
+if(userdistc[3]=="ft"){userdist<-userdist/3.2808399}
+
+if(userdistc[1]=="go back"){step<-1}else{step<-3}
+
+}#end step 2
+
+if(step==3){
+
+setStatusBar(paste("NYSDOH Point Pertubation Tool: confirm your selections"))
+
+if(userdistc[2]=="NONE"){mymessage<-paste("Do you want to move points from ",userfilein," a maximum distance of ",userdist[1],userdist[3]," but keep them within the boundaries of ",userfileinb,"?")}
+else{
+mymessage<-paste("Do you want to move points from ",userfilein," the maximum distance specified in the data field ",userdistc[2],"in", userdistc[3]," but keep them within the boundaries of ",userfileinb,"?")}
+
+mycancel<-guiDlgMessage(mymessage,title=paste("Confirm your choices"),type="yesnocancel",icon="question")
+
+if(mycancel=="yes"){step<-100} #done with user input 
+if(mycancel=="no"){step<-2} #if no, go back a step
+if(mycancel=="cancel"){quit(save="no")}
+}#end step 3, confirmation
+} #end the while step<100
+
+
+#now, want to display the points
+#will want to confirm that the class is "SpatialPointsDataFrame" for mypoints.shp
+#class of mybound.shp is "SpatialPolygonsDataFrame"
+
+plot(mybound.shp)
+points(mypoints.shp, pch=21, col="black",bg="red") #produces red circles outlined in black
+#title("Points before moving")
+
+npoints<-nrow(mypoints.shp)
+newdis<-runif(npoints,min=0,max=userdist)
+newang<-runif(npoints,min=0,max=2*pi)
+
+#formulas to move points
+#for y: original latitude+ SIN(r1*2*PI())*r2*500/111000
+#for x: original longitude+COS(r1*2*PI())*r2*500)/(COS(RADIANS(original lat))*111321)
+
+mycoords<-coordinates(mypoints.shp)
+#coordinates of areas gives label points, one for each area
+myx<-mycoords[,1]
+myy<-mycoords[,2]
+
+#make sure arguments of sin/cosine are in radians.  
+mynewy<-myy+sin(newang)*newdis/111000  #approx 111 km per degree latitude
+mynewx<-myx+cos(newang)*newdis/(cos(myy*pi/180)*111321)
+
+#now, also need to get coordinates for polygons, and check if points are inside
+x<-length(mybound.shp@polygons)
+for(n in 1:x){
+myp<-mybound.shp@polygons[[n]] #here '1' is the first polygon in the shapefile (can loop through), 9 is albany for my example data
+myp2<-myp@Polygons[[1]]
+mypc<-myp2@coords
+mypx<-mypc[,1]
+mypy<-mypc[,2]
+#check if points are in polygon.  0=exterior, 1=interior, 2&3 are on edge/vertex
+checkifin<-point.in.polygon(myx,myy,mypx,mypy)
+checkifnewin<-point.in.polygon(mynewx,mynewy,mypx,mypy)
+print(c(n,checkifin,checkifnewin))
+
+#if the old point is in an area, but the new point is not, need to fix it
+y<-length(checkifin)
+for(p in 1:y){
+if(checkifin[p]>1){checkifin[p]<-1} #treat edges as interior
+if(checkifnewin[p]>1){checkifnewin[p]<-1}
+shorterdist<-userdist
+while(checkifin[p]==1&&checkifnewin[p]==0){print(c("need to fix ",p))
+shorterdist<-shorterdist-shorterdist*0.1  #if the point falls outside the area, decrease the maximum distance by 10% each time we cycle through
+newdis[p]<-runif(1,min=0,max=shorterdist)
+newang[p]<-runif(1,min=0,max=2*pi)
+mynewy[p]<-myy[p]+sin(newang[p])*newdis[p]/111000  #approx 111 km per degree latitude
+mynewx[p]<-myx[p]+cos(newang[p])*newdis[p]/(cos(myy[p]*pi/180)*111321)
+checkifnewin[p]<-point.in.polygon(mynewx[p],mynewy[p],mypx,mypy)
+if(checkifnewin[p]>1){checkifnewin[p]<-1}
+}#for discrepant points
+}#after cycling through number of points
+}#cycle through all areas
+
+
+mynewcoords<-data.frame(mynewx,mynewy)
+mydata<-data.frame(mypoints.shp)
+coordinates(mydata)<-mynewcoords
+proj4string(mydata)<-proj4string(mypoints.shp) #assign original projection to new points
+
+#dev.new()
+#use points to add new data to same plot
+points(mydata, pch=24, col="black",bg="blue") #produces green triangles outlined in black
+title("Points before and after moving")
+legend(x="topleft",legend=c("before","after"),horiz=FALSE,pch=c(21,24),col=c("black","black"),pt.bg=c("red","blue"))
+
+userfileout<-"" #set as default missing
+setStatusBar(paste("NYSDOH Point Pertubation Tool: save file"))
+
+while(userfileout==""){
+userout<-guiDlgSave(title = "Save Moved Points As", defaultFile = "", defaultDir = "",defaultExt = "", filters = c("Shapefiles (*.shp)", "*.shp"))
+#now remove any file extention
+periodloc=regexpr(".",userout,fixed=TRUE) #will be -1 if no match, otherwise location(s) of matches
+if(periodloc>0){userout<-substr(userout,1,periodloc[1]-1)}
+
+#find output file name and path
+slashloc<-max(unlist(gregexpr("/",userout,fixed=TRUE))) #find location of last slash, divides path and file name
+userfileout<-substr(userout,slashloc+1,nchar(userout))
+userpathout<-substr(userout,1,slashloc-1)
+#filename shouldn't contain ;=+<>|"[]/\'<>:*?
+
+checkfile<-regexpr(";|:|\\+|=|<|>|\\||\\[|\\]|/|\"|'|\\*|\\?\n",userfileout,perl=TRUE)
+if(checkfile[1]!="-1"){userfileout<-""}
+
+checkfile<-charmatch("\\",userfileout,nomatch=-1)
+if(checkfile[1]!="-1"){userfileout<-""}
+
+if(userfileout==""){
+guiDlgMessage("Your file name may have been invalid.  Please reenter your file name.",title="WARNING", type="ok")}
+} #end while no good file name
+
+#userpathout<-"E:/testdata"
+#userfileout<-"movedpoints"
+
+#change names of old coordinates
+names(mydata)[names(mydata)=="coords.x1"]<-"prev_x" #change the name of the old coordinates
+names(mydata)[names(mydata)=="coords.x2"]<-"prev_y" #change the name of the old coordinates
+
+#write  out shapefile using OGR
+#output file doesn't seem to have projection
+writeOGR(mydata, userpathout, userfileout, driver="ESRI Shapefile",verbose=FALSE) #seems fast
+
+kmlfilename<-paste(userpathout,paste(userfileout,"kml",sep="."),sep="/")
+#for KML need writeOGR(object,fileName,layerName,driver="KML") 
+#where layer name will be distplayed in layer list of Google Earth
+mykmlnames<-paste("NameField=",names(mydata)[1],sep="") #default to use the first field as ID
+writeOGR(mydata,kmlfilename,"moved_points", driver="KML",dataset_options=mykmlnames,verbose=FALSE)
+#might be able to specifcy NameField, DescriptionField, AltitudeMode
+#NameField=mydata@data[1]
+writeOGR(mydata, userpathout, userfileout, driver="MapInfo File",verbose=FALSE) #seems fast
+
+setStatusBar(paste("NYSDOH Point Pertubation Tool: find your results in: ",userpathout))
+
+
+
+
+
