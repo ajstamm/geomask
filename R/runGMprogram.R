@@ -146,7 +146,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
             step <- 10
             temp$quit <- TRUE
           } else if (!temp$backopt) {
-            step <- 7
+            step <- 6
           } else {
             step <- step + 1
           }
@@ -199,7 +199,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
           # myshps$bound <- dplyr::mutate(myshps$bound, bound_id = dplyr::row_number())
           # myshps$bound <- dplyr::select(myshps$bound, bound_id)
 
-          msg <- paste("Please select the variable that",
+          temp$msg <- paste("Please select the variable that",
                        "\nidentifies boundaries within",
                        "\nwhich your points should be relocated.")
           hlp <- paste0("Select your boundary variable. \n",
@@ -231,7 +231,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
             step <- 10
             temp$quit <- TRUE
           } else if (!temp$backopt) {
-            step <- 7
+            step <- 6
           } else {
             step <- step + 1
           }
@@ -302,7 +302,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
                               icon = "error", message = temp$msg)
         } else {
           if (!temp$backopt) {
-            step <- 7
+            step <- 6
           } else {
             step <- step + 1
           }
@@ -328,7 +328,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
           mysettings$kml <- FALSE # don't save the kml
         }
         if (!temp$backopt) {
-          step <- 7
+          step <- 6
         } else {
           step <- step + 1
         }
@@ -358,7 +358,7 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
         temp$quit <- TRUE
         step <- 10
       } else if (!temp$backopt) {
-        step <- 7
+        step <- 6
       } else {
         step <- step + 1
       }
@@ -456,7 +456,8 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
 
     # save log ----
     mysettings$endtime <- Sys.time()
-    mysettings$exists <- file.exists(paste0(filevars$userout, ".shp"))
+    temp$testfile <- paste0(paste(filevars$userout, "new", sep = "_"), ".shp")
+    mysettings$exists <- file.exists(temp$testfile)
 
     writeGMlog(area = myshps$point, maskvars = maskvars, filevars = filevars,
                mysettings = mysettings, settingsfile = settings)
