@@ -56,6 +56,14 @@ runGMprogram <- function(bgcol = "thistle1", buttoncol = "plum2",
                        starttime = Sys.time()) # needed for the log
   }
 
+  coltest <- !"try-error" %in%
+    class(try(grDevices::col2rgb(bgcol), silent = TRUE))
+  if (!coltest) bgcol = "thistle1"
+  coltest <- !"try-error" %in%
+    class(try(grDevices::col2rgb(buttoncol), silent = TRUE))
+  if (!coltest) buttoncol = "plum2"
+
+
   #---- progress bar ----
   pb <- list(title = paste("NYSDOH Geomasking Tool",
                            mysettings$version, mysettings$date),

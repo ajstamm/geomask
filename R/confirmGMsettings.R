@@ -39,6 +39,14 @@
 confirmGMsettings <- function(maskvars, filevars, savekml = FALSE, step = 0,
                               bgcol = "lightskyblue3", quitopt = "Quit",
                               buttoncol = "cornflowerblue") {
+  coltest <- !"try-error" %in%
+    class(try(grDevices::col2rgb(bgcol), silent = TRUE))
+  if (!coltest) bgcol = "thistle1"
+  coltest <- !"try-error" %in%
+    class(try(grDevices::col2rgb(buttoncol), silent = TRUE))
+  if (!coltest) buttoncol = "plum2"
+
+
   ## initial settings ####
   instruct <- paste("To modify a step, choose it from the list and click",
                     "'Confirm'. \n After you modify most steps, you will",
@@ -61,7 +69,10 @@ confirmGMsettings <- function(maskvars, filevars, savekml = FALSE, step = 0,
 
   # define settings ----
   kml <- if (savekml) "Yes" else "No"
-
+  min <- format(as.numeric(gsub(",", "", maskvars$min)),
+                big.mark=",", scientific=FALSE)
+  max <- format(as.numeric(gsub(",", "", maskvars$max)),
+                big.mark=",", scientific=FALSE)
 
   mysets <- paste0("  ", stepslist[1],
                    "\n      ", filevars$pointin, " ",
@@ -70,8 +81,8 @@ confirmGMsettings <- function(maskvars, filevars, savekml = FALSE, step = 0,
                    "\n      ", filevars$boundin,
                    "\n      ID variable: ", maskvars$bound_id,
                    "\n  ", stepslist[3],
-                   "\n      Minimum distance: ", maskvars$min,
-                   "\n      Maximum distance: ", maskvars$max,
+                   "\n      Minimum distance: ", min,
+                   "\n      Maximum distance: ", max,
                    "\n  ", stepslist[4], ": ", kml,
                    "\n  ", stepslist[5],
                    "\n      ", filevars$userout)

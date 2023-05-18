@@ -29,6 +29,14 @@ selectGMdistances <- function(step = 3, min = "1,000", max = "10,000",
                               unit = "meters", backopt = TRUE,
                               bgcol = "lightskyblue3", quitopt = "Quit",
                               buttoncol = "cornflowerblue") {
+  coltest <- !"try-error" %in%
+    class(try(grDevices::col2rgb(bgcol), silent = TRUE))
+  if (!coltest) bgcol = "thistle1"
+  coltest <- !"try-error" %in%
+    class(try(grDevices::col2rgb(buttoncol), silent = TRUE))
+  if (!coltest) buttoncol = "plum2"
+
+
   # exposition ----
   helppage <- "selectGMdistances"
   hlp <- paste0("In the text boxes, enter your desired minimum and maximum",

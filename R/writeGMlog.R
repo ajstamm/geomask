@@ -168,9 +168,9 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
     # saved files ----
     oshp <- paste(filevars$pointfile, "shp", sep = ".")
     bshp <- paste(filevars$boundfile, "shp", sep = ".")
-    orshp <- paste(paste(filevars$pointfile, "old", sep = "_"), "shp", sep = ".")
-    nshp <- paste(paste(filevars$pointfile, "new", sep = "_"), "shp", sep = ".")
-    bshp <- paste(paste(filevars$pointfile, "buffer", sep = "_"), "shp", sep = ".")
+    orshp <- paste(paste(filevars$fileout, "old", sep = "_"), "shp", sep = ".")
+    nshp <- paste(paste(filevars$fileout, "new", sep = "_"), "shp", sep = ".")
+    bfshp <- paste(paste(filevars$fileout, "buffer", sep = "_"), "shp", sep = ".")
 
     logtext <- c("All files have been saved to", filevars$pathout,
                  "\n  Original shapefile:  ", oshp,
@@ -179,7 +179,7 @@ writeGMlog <- function(area = NULL, maskvars, filevars, mysettings = NULL,
                  "latitude and longitude:",
                  "\n                       ", orshp,
                  "\n  Masked shapefile:    ", nshp,
-                 "\n  Buffer shapefile:    ", bshp)
+                 "\n  Buffer shapefile:    ", bfshp)
     write(logtext, file = logfile, ncolumns = length(logtext), append = TRUE)
   }
   logtext <- c("\n  Maps:                ",
