@@ -14,8 +14,9 @@ Authors@R: c(
       role = c("fnd"), comment = "Grant NUE1EH001341-03-01")
     )
 Maintainer: Abigail Stamm, NYSDOH EPHT <epht@health.ny.gov>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: The purpose of the geomasker is to move points randomly within a 
+    circular region around each point. This could be used to preserve 
+    confidentiality in publicly released point maps.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

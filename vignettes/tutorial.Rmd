@@ -292,7 +292,7 @@ File saved to the save folder if you followed the vignette:
 - geomasked_points.log
 
 
-# GAT is finished, now what?
+# Geomasker finished, now what?
 
 ## Where to find your files
 

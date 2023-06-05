@@ -5,7 +5,7 @@
       * will need to revise buffering step, too
   * fix error when clicking "cancel" for boundary file
   * create troubleshooting doc with known warnings
-  * create tech notes
+  * finish tech notes
   * remove duplicate process files from the log
 
 * features to add
