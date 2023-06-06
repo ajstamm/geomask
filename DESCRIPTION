@@ -32,4 +32,5 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    tigris
+    tigris,
+    lwgeom

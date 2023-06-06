@@ -22,13 +22,8 @@
 #'
 #' @examples
 #'
-#' maskvars <- list(
-#'   min = 100,
-#'   max = 1000,
-#'   unit = "meters",
-#'   point_id = "POINTID",
-#'   bound_id = "GEOID10"
-#' )
+#' maskvars <- list(min = 100, max = 1000, unit = "meters",
+#'                  point_id = "POINTID", bound_id = "GEOID10")
 #'
 #' ot <- tigris::tracts("NY", "Onondaga", year = 2010)
 #' ol <- tigris::landmarks("NY", "point", year = 2015)
@@ -43,6 +38,8 @@
 
 
 calculateGMpoints <- function(myshps, maskvars) {
+  # set up progress bar
+
   # create temp max/min variables
   # create flag variable for number max/min iterations
   # if buffer fails, min = min/2 & max = min, reiterate if needed
@@ -78,6 +75,7 @@ calculateGMpoints <- function(myshps, maskvars) {
                iter = 0)
 
   while (nrow(temp$int) > 0) {
+    temp$bound <- myshps$bound[myshps$bound$bound_id %in% temp$int$bound_id, ]
     temp$bufmin <- sf::st_buffer(temp$int, temp$min)
     temp$bufmin <- dplyr::select(temp$bufmin, !!dplyr::sym("point_id"),
                                  !!dplyr::sym("bound_id"))
@@ -85,34 +83,34 @@ calculateGMpoints <- function(myshps, maskvars) {
     temp$bufmax <- dplyr::select(temp$bufmax, !!dplyr::sym("bound_id"))
 
     for (i in 1:nrow(temp$int)) {
-      temp$bufmin1 <- dplyr::slice(temp$bufmin, i)
-      temp$bufmax1 <- dplyr::slice(temp$bufmax, i)
-      temp$diff1 <- sf::st_difference(temp$bufmax1, temp$bufmin1)
-      temp$bound1 <- dplyr::filter(myshps$bound,
-                                   !!dplyr::sym("bound_id") ==
-                                     temp$bufmin1$bound_id[1])
-      temp$int1 <- sf::st_intersection(temp$bound1, temp$diff1)
-      if (nrow(temp$int1) > 0) {
-        temp$shift1 <- sf::st_as_sf(sf::st_sample(temp$int1, 1),
-                                    crs = sf::st_crs(temp$bufmin1))
-        temp$shift1$point_id <- temp$bufmin1$point_id
-        temp$shift1$bound_id <- temp$bufmin1$bound_id
-        temp$shift1$mask_lon <- sf::st_coordinates(temp$shift1)[,1]
-        temp$shift1$mask_lat <- sf::st_coordinates(temp$shift1)[,2]
-        temp$shift1$flag <- temp$int1$flag <- temp$iter
+      temp$point <- dplyr::slice(temp$int, i)
+      temp$bmax <- dplyr::slice(temp$bufmax, i)
+      temp$bmin <- dplyr::slice(temp$bufmin, i)
+      temp$ring <- sf::st_difference(temp$bmax, temp$bmin)
+      temp$area <- temp$bound[temp$bound$bound_id %in% temp$point$bound_id, ]
+      temp$area <- sf::st_transform(temp$area, crs = sf::st_crs(temp$ring))
+      temp$valid <- sf::st_intersection(temp$ring, temp$area)
+
+      if (nrow(temp$valid) > 0) {
+        temp$shift <- sf::st_as_sf(sf::st_sample(temp$valid, size = 1),
+                                    crs = sf::st_crs(temp$int))
+        temp$shift$point_id <- temp$point$point_id
+        temp$shift$bound_id <- temp$point$bound_id
+        temp$shift$mask_lon <- sf::st_coordinates(temp$shift)[, 1]
+        temp$shift$mask_lat <- sf::st_coordinates(temp$shift)[, 2]
+        temp$shift$flag <- temp$point$flag <- temp$iter
         if (nrow(myshps$buffer) == 0) {
-          myshps$buffer <- temp$int1
-          myshps$shifted <- temp$shift1
+          myshps$buffer <- temp$point
+          myshps$shifted <- temp$shift
         } else {
-          myshps$buffer <- dplyr::bind_rows(myshps$buffer, temp$int1)
-          myshps$shifted <- dplyr::bind_rows(myshps$shifted, temp$shift1)
+          myshps$buffer <- dplyr::bind_rows(myshps$buffer, temp$point)
+          myshps$shifted <- dplyr::bind_rows(myshps$shifted, temp$shift)
         }
       }
     }
 
-    temp$int <- dplyr::filter(myshps$intersect,
-                              !(!!dplyr::sym("point_id") %in%
-                                  myshps$shifted$point_id))
+    temp$int <- myshps$intersect[!myshps$intersect$point_id %in%
+                                  myshps$shifted$point_id, ]
     temp$max <- temp$min
     temp$min <- temp$min / 2
     temp$iter <- temp$iter + 1
@@ -127,9 +125,7 @@ calculateGMpoints <- function(myshps, maskvars) {
   temp$inter <- data.frame(myshps$intersect)[, c(vars, "orig_lon", "orig_lat")]
   myshps$new_full <- dplyr::full_join(myshps$shifted, temp$inter,
                                       by = c("point_id", "bound_id"))
-  myshps$buffer <- myshps$buffer |>
-    dplyr::select(!!dplyr::sym("point_id"), !!dplyr::sym("bound_id"),
-                  !!dplyr::sym("flag"))
+  myshps$buffer <- myshps$buffer[, c("point_id", "bound_id", "flag")]
 
   return(myshps)
 }

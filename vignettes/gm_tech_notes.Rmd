@@ -8,16 +8,14 @@ output:
     toc_depth: 3
     number_sections: true
 vignette: >
-  %\VignetteIndexEntry{GAT Technical Notes}
+  %\VignetteIndexEntry{Technical Notes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
+knitr::opts_chunk$set(collapse = TRUE, warning = FALSE, message = FALSE, 
+                      echo = FALSE, comment = "#>")
 ```
 
 
@@ -41,14 +39,37 @@ The package does not include any embedded shapefiles. It uses the tigris package
 
 # How the geomasker selects masked points
 
-The geomasker reads in point data and identifies the boundary polygon in which the point falls.
-
-```{r point}
-b <- tigris::blocks("NY", "Onondaga", 2010)
-c <- b |> dplyr::filter(grepl(36067011401, GEOID10))
+```{r examplebuffer, warning = FALSE, message = FALSE, echo = FALSE, include = FALSE}
+# load data
+b <- tigris::block_groups("NY", "Onondaga", 2010)
+c <- b |> dplyr::filter(grepl(36067011401, GEOID))
 p <- tigris::landmarks("NY", "point", year = 2015)
 t <- t <- sf::st_contains(c, p) |> unlist()
 q <- p[t, ]
+
+# create buffers
+bufmin <- sf::st_buffer(q, 500)
+bufmax <- sf::st_buffer(q, 1000)
+diff <- sf::st_difference(bufmax, sf::st_combine(bufmin), model = "closed")
+
+# limit buffers to relevant geographies
+int <- sf::st_intersection(q, c)
+poly <- dplyr::filter(c, GEOID %in% int$GEOID)
+d <- sf::st_intersection(diff, poly)
+
+# shift points
+shift <- sf::st_as_sf(sf::st_sample(d, size = rep(1, nrow(d)), 
+                                    by_polygon = TRUE), 
+                      crs = sf::st_crs(c))
+
+
+```
+
+The geomasker reads in point data and identifies the boundary polygon in which the point falls.
+
+```{r point, fig.cap = 'Block groups with landmark points, Onondaga County, NY', warning = FALSE, message = FALSE}
+graphics::par(mar = c(0,0,0,0)+.1, mgp = c(0,0,0)) # bottom, left, top, right
+
 
 plot(sf::st_geometry(c), border = "green", col = "transparent",
      lty = "solid", lwd = 1)
@@ -61,13 +82,10 @@ plot(sf::st_geometry(q), col = "blue", pch = 20, add = TRUE)
 
 <!-- what if there are no valid points in the buffer? -->
 
-The geomasker creates a ring around the point using the user-defined minimum distance to create the inner ring and the user-defined maximum distance to calculate the outer ring.
+The geomasker creates a buffer around the point using the user-defined minimum distance to draw the inner ring and the user-defined maximum distance to draw the outer ring. 
 
-```{r buffer}
-
-bufmin <- sf::st_buffer(q, 500)
-bufmax <- sf::st_buffer(q, 1000)
-diff <- sf::st_difference(bufmax, sf::st_combine(bufmin), model = "closed")
+```{r buffer, warning = FALSE, message = FALSE, fig.cap = 'Block groups with landmark points and buffers, Onondaga County, NY'}
+graphics::par(mar = c(0,0,0,0)+.1, mgp = c(0,0,0)) # bottom, left, top, right
 
 plot(sf::st_geometry(diff), col = "yellow", border = "orange")
 plot(sf::st_geometry(c), border = "green", col = "transparent",
@@ -77,31 +95,29 @@ plot(sf::st_geometry(q), col = "blue", pch = 20, add = TRUE)
 
 ```
 
-The geomasker intersects the buffer with the boundary associated with the point. The valid buffer below is outlined in cyan. The yellow area at the top does not intersect the buffer, so it is not valid.
+The geomasker intersects the buffers with the boundary associated with their respective points. The valid sampling areas are below, outlined in cyan. 
 
-```{r buffer, warnings = FALSE}
+```{r valid, warning = FALSE, message = FALSE, fig.cap = 'Block groups with landmark points, buffers, and valid sampling areas, Onondaga County, NY'}
+graphics::par(mar = c(0,0,0,0)+.1, mgp = c(0,0,0)) # bottom, left, top, right
 
-int <- sf::st_intersection(q, c)
-poly <- dplyr::filter(c, GEOID10 %in% int$GEOID10)
-d <- sf::st_intersection(diff, poly)
 
+plot(sf::st_geometry(diff), col = "transparent", border = "orange")
 plot(sf::st_geometry(c), border = "green", col = "transparent",
-     lty = "solid", lwd = 1)
-plot(sf::st_geometry(poly), border = "red", col = "yellow",
      lty = "solid", lwd = 1, add = TRUE)
-plot(sf::st_geometry(diff), col = "transparent", border = "orange", add = TRUE)
-plot(sf::st_geometry(q[2, ]), col = "blue", pch = 20, add = TRUE)
-plot(sf::st_geometry(d), col = "orange", border = "cyan", lwd = 2, add = TRUE)
+plot(sf::st_geometry(poly), border = "red", col = "ivory",
+     lty = "solid", lwd = 1, add = TRUE)
+plot(sf::st_geometry(d), col = "yellow", border = "cyan", lwd = 2, add = TRUE)
+plot(sf::st_geometry(q), col = "blue", pch = 20, add = TRUE)
 
 
 ```
 
-Continuing with the lower point with the valid buffer, the geomasker selects a random point inside the intersected area. Subsequent loops will cycle through the second point until a valid area is created. A point will be randomly selected from the eventual valid area.
+The geomasker selects a random point inside each valid area. Subsequent loops will cycle through points without valid areas until a valid area is drawn and a new point is randomly selected. Shifted points are red below.
 
 
-```{r buffer}
-shift <- sf::st_as_sf(sf::st_sample(d, 1), crs = sf::st_crs(c))
+```{r shifted, warning = FALSE, message = FALSE, fig.cap = 'Block groups with landmark points, buffers, valid areas, and shifted points, Onondaga County, NY'}
 
+graphics::par(mar = c(0,0,0,0)+.1, mgp = c(0,0,0)) # bottom, left, top, right
 
 
 
@@ -109,8 +125,8 @@ plot(sf::st_geometry(diff), col = "transparent", border = "orange")
 plot(sf::st_geometry(c), border = "green", col = "transparent",
      lty = "solid", lwd = 1, add = TRUE)
 plot(sf::st_geometry(q), col = "blue", pch = 20, add = TRUE)
-plot(sf::st_geometry(d), col = "orange", border = "cyan", lwd = 2, add = TRUE)
-plot(sf::st_geometry(shift), col = "purple", pch = 20, add = TRUE)
+plot(sf::st_geometry(d), col = "yellow", border = "cyan", lwd = 2, add = TRUE)
+plot(sf::st_geometry(shift), col = "red", pch = 20, add = TRUE)
 
 
 ```
@@ -129,9 +145,9 @@ plot(sf::st_geometry(shift), col = "purple", pch = 20, add = TRUE)
 - **mask_lon:** shifted or masked location longitude as calculated by R
 - **flag:** number of times buffers had to be recalculated to create a valid area
 
-For the flag variable, the lowest possible value is 0, which means that when intersecting a buffer using the user-defined minimum and maximum distances with the boundary polygon, a valid area was created from which to select a sample point. There is no highest possible value, but the higher the flag value, the narrower the buffer created and the closer the masked point will be to the original point. Each time the process fails to create a valid area, the maximum and minimum distances for the ring are recalculated. The new maximum value becomes the old minimum value and the new minimum value becomes half the new maximum value. You should review any point with a flag value greater than 0.
+For the flag variable, the lowest possible value is 0, which means that when intersecting a buffer using the user-defined minimum and maximum distances with the boundary polygon, a valid area was created from which to select a sample point. There is no highest possible value, but the higher the flag value, the narrower the buffer created and the closer the masked point will be to the original point. Each time the process fails to create a valid area, the maximum and minimum distances for the ring are recalculated. The old minimum value becomes the new maximum value and the new minimum value is assigned half the new maximum value. 
 
-
+Users should review any point with a flag value greater than 0. The "*_buffer" shapefile is provided so users can see the exact areas sampled to generate the masked points. This shapefile includes the "point_id" variable so users can link points and buffers easily.
 
 
 
