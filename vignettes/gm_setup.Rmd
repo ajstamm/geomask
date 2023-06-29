@@ -1,0 +1,65 @@
+---
+title: "GAT Setup Instructions"
+author: "Abigail Stamm"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{GAT Setup Instructions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Installing and running the Geomasker
+
+The Geomasking Tool (Geomasker) is available from New York State (NYS) Environmental Public Health Tracking (EPHT) [GitHub](https://github.com/NYSTracking/geomask).
+
+
+<!-- # This is a placeholder. We are not on CRAN yet. -->
+<!-- You can install the released version of gatpkg from  -->
+<!-- [CRAN](https://CRAN.R-project.org) with `install.packages("gatpkg")`.  -->
+
+Until the Geomasker is posted to CRAN, the easiest way to install is from GitHub. You will need to install devtools first. You will also need to install the development version (at the time of writing) of the package gatpkg, which contains the NYS EPHT Geographic Aggregation Tool (GAT), since the Geomasker uses some of the functions in gatpkg. Some users have also reported that they needed to install [RTools](https://cran.r-project.org/bin/windows/Rtools/) first.
+
+
+```{r, eval=FALSE}
+install.packages("devtools")
+devtools::install_github("ajstamm/gatpkg@Dev", dependencies = TRUE,
+                         build_vignettes = TRUE)
+devtools::install_github("NYSTracking/geomask", dependencies = TRUE,
+                         build_vignettes = TRUE)
+```
+
+To load the Geomasker, run `library(geomask)`.
+
+To run the Geomasker with default settings, run [runGMprogram()](../html/runGMprogram.html). For most users, this function alone is probably sufficient. If you would like more detail on what the Geomasker does, check out the [tutorial](tutorial.html) or the [technical notes](gm_tech_notes.html).
+
+The full default program to run the Geomasker looks like this:
+
+```{r, eval=FALSE}
+# from GitHub
+install.packages("devtools")
+devtools::install_github("ajstamm/gatpkg@Dev", dependencies = TRUE,
+                         build_vignettes = TRUE)
+devtools::install_github("NYSTracking/geomask", dependencies = TRUE,
+                         build_vignettes = TRUE)
+library(geomask)
+runGMprogram()
+```
+
+The package contains several other functions, which are used in the function [runGMprogram()](../html/runGMprogram.html). Feel free to use these to customize the Geomasker to meet your needs. 
+
+## Disclaimer
+
+This version of the Geomasker is provided as is. 
+
+The original script for the Geomasker was written in R-2.13.0 in Windows XP. It was revised and converted to a package in R-4.3.0 in Windows 10 using RStudio-2023.06.0. It has been tested on R version 4.3. 
+
+The user needs minimal R programming experience to run the Geomasker and basic experience in manipulating R functions for some advanced features. 
+

@@ -1,0 +1,41 @@
+---
+title: "Geomasker Shapefile Preparation"
+author: "Abigail Stamm"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Shapefile Preparation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Shapefile specifications
+
+This vignette provides the requirements for a shapefile that will be processed by the Geomasking Tool (Geomasker) and the necessary specifications if you wish to use the Geomasker's various options.
+
+The Geomasker requires two Esri shapefiles. If your files are in another format, you will need to convert them to Esri shapefiles using R or your preferred GIS software.
+
+### Shapefile to mask
+
+The minimum requirements for your shapefile to mask include:
+
+1. **Point geometry**: The layer shapes must be polygons, for example state outlines.
+2. **Identifier variable**: A character or string variable with unique values for each row.
+
+
+
+### Boundary shapefile
+
+To shift points within a boundary, you will need another Esri shapefile. It must include:
+
+1. **Polygon geometry**: The layer shapes must be polygons, for example state outlines.
+
+
+

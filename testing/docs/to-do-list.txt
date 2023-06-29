@@ -4,8 +4,10 @@
   * make boundary file optional
       * will need to revise buffering step, too
   * fix error when clicking "cancel" for boundary file
-  * create troubleshooting doc with known warnings
   * remove duplicate process files from the log
+  * test shapefile preparation document
+  * add change log
+  * add citation and acknowledgements document
 
 * features to add
 
@@ -15,6 +17,7 @@
 
 * done?
 
+- [ ] create troubleshooting vignette with known warnings
 - [ ] finish tech notes
 - [ ] add check for OS type to bypass Windows requirement in locate and save steps
 - [x] check that all shapefiles are correctly named and labeled in the log (not reading save name correctly)
