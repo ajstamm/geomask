@@ -5,7 +5,6 @@
       * will need to revise buffering step, too
   * fix error when clicking "cancel" for boundary file
   * create troubleshooting doc with known warnings
-  * finish tech notes
   * remove duplicate process files from the log
 
 * features to add
@@ -16,6 +15,7 @@
 
 * done?
 
+- [ ] finish tech notes
 - [ ] add check for OS type to bypass Windows requirement in locate and save steps
 - [x] check that all shapefiles are correctly named and labeled in the log (not reading save name correctly)
 - [x] add check that colors are valid, else use default (and add to GAT, too - not added to GAT yet)
