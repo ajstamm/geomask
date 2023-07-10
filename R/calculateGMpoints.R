@@ -1,7 +1,8 @@
 #' Calculate geomasked points
 #'
+#' @inheritParams confirmGMsettings
+# @param maskvars  List of settings for calculating masked locations.
 #' @param myshps    List of shapefiles
-#' @param maskvars  List of settings for calculating masked locations.
 #'
 #' @description
 #'
@@ -19,6 +20,8 @@
 #' in the flag variable in both layers produced. (A flag of 0 means the first
 #' buffer contained valid points to sample.)
 #'
+#' @returns `myshps` list object containing two new map layers, one with buffer
+#'          areas and one with masked points.
 #'
 #' @examples
 #'

@@ -1,9 +1,10 @@
 #' Run the geomasker
 #'
-#' @param settings   The filepath to an Rdata file previously created by the
-#'                   Geomasker.
-#' @param bgcol      Text string containing UI background color.
-#' @param buttoncol  Text string containing UI button color.
+#' @inheritParams gatpkg::runGATprogram
+# @param settings   The filepath to an Rdata file previously created by the
+#                   Geomasker.
+# @param bgcol      Text string containing UI background color.
+# @param buttoncol  Text string containing UI button color.
 #'
 #' @description
 #' This function runs the full geomasking tool.
@@ -13,7 +14,9 @@
 #' for example, you would like to run the geomasker with two different
 #' distances, but keep all other settings the same.
 #'
-#'
+#' @returns Series of dialog windows and several files.
+#'    * Dialogs: Request shapefiles, distance settings, KML, and save file
+#'    * Files:   Shapefiles, PDF, log, and optional KML file
 #'
 #' @examples
 #'

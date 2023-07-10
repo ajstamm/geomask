@@ -1,0 +1,106 @@
+---
+title: "Change Log"
+author: "Abigail Stamm"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Change Log}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Geomasker v1.4.0 (July 7, 2023)
+
+All changes from January 2020 onward by Abigail Stamm.
+
+> Below is a summary of differences between the R script for the geomasker 
+> released in 2013 and the first beta release of the R package in 2023.
+
+#### Coding changes
+
+* Reordered steps by section: user input, masking, mapping, and file saving.
+* Converted all instances of svdialogs to tcltk.
+* Called functions in the Geographic Aggregation Tool (`gatpkg`) where possible 
+  to streamline updates and reduce redundancy.
+* Rewrote quit code to request quit confirmation.
+* Standardized Geomasker-created variable names.
+* Added dialogs to handle incorrectly entered data on the fly.
+* Required points to be selected from inside boundaries.
+
+
+#### Resource changes
+
+* Created 7 functions with accompanying help files and examples.
+* Developed several vignettes, including a tutorial, and expanded the 
+  technical notes and troubleshooting documents.
+* Developed examples using the `tigris` package to avoid embedding data.
+* Added citation, license, and funding information.
+
+
+#### User input changes
+
+* Reordered and restructured user input dialogs.
+* Added help button and instructions to user input dialogs.
+* Added function options to user input dialogs to allow the following:
+    * option not to write KML file
+    * saving and rerunning prior settings
+    * confirmation dialog that allows user to return to previous steps
+
+
+#### Output changes
+
+* Added setting information to map.
+* Saved map to a PDF file.
+* Added all settings and Geomasker-created variables and files to the log. 
+* Added a list of saved files to the console.
+* Saved Geomasker settings in an Rdata object to be reread into the Geomasker.
+* Made saving to KML optional.
+
+
+
+
+## Geomasker v1.3 (November 6, 2013)
+
+All changes prior to 2020 by Gwen Babcock.
+
+> Changes prior to 2020 are listed below as they were entered in the program
+> comments, with minor formatting changes. Most do not appear to correspond
+> directly to specific versions. Comments appear to cover a mix of actual and
+> planned changes. 
+
+Purpose of this R script is to take an input shapefile of points and randomly 
+move the points a specified distance and output the corresponding shapefile and 
+KML file. Plan to make the distance the point is moved depend on population 
+density. 
+
+Programmed in R2.13.0 for Windows XP, later adapted for R3.0.2 for Windows 7.
+
+Non-default libraries needed: 
+
+* sp
+* rgdal to read in shapefile
+* tcktk and svDialogs for GUI
+
+Load default libraries. Need this to run as batch.
+Currently requires shapefiles to be in lat/long, might want to look at function 
+spTransform() to change projection if needed.
+
+* v1.1 June 17, 2011
+    * Add minimum distance
+* v1.2 July 20, 2011
+    * Add log file and adjust maximum distances if needed
+    * Aug 9, 2011 improve error catching for opening files - catch files with 
+      wrong capitalization
+* v1.3 November 6, 2013 
+    * Adapt to work with R 3.0.2 
+    * Change guiDlgOpen to dlgOpen, guiDlgMessage to dlgMessage, dlgSave
+    *	Add $res after dlgOpen and dlgMessage where needed
+    * Add features to keep the points within an area
+

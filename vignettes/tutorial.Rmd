@@ -254,19 +254,25 @@ Files saved to the save folder if you followed the vignette:
 
 The "flag" variable in the old and new buffers refers to the number of times boundaries had to be recalculated to create a valid area to select a masking point. Each time the buffering failed to create a valid area, the maximum and minimum values were recalculated as follows.
 
-- new maximum value = prior minimum value
-- new minimum value = half of prior minimum value
+- new maximum value = prior minimum value, or given the flag value, $$new_-min = \frac{old_-min}{2^{flag}}$$
+- new minimum value = half of prior minimum value, or given the flag value, $$new_-max = new_-min * 2$$
 
-For example, a flag value of 0 means the first buffer was valid. A flag of 2 means the buffer had to be recalculated twice to create a valid area.
 
-To map these files yourself after the geomasker finishes, you can use the following code. The first part reads in the shapefiles. The second part draws the map.
+> For example, given the original minimim value of 1000, 
+> 
+>   * A flag value of 0 means the original buffer area was valid. 
+>   * A flag of 2 means the buffer had to be recalculated twice to create a valid area, so the new minimum value equals 250 and new maximum value equals 500.
+
+
+To map the first five records in these files yourself after the geomasker finishes, you can use the following code. The first part reads in the shapefiles. The second part draws the map.
 
 ```{r drawmap, eval = FALSE}
+# read your shapefiles
 myfilepath <- "c:/users/my_id/my_folder" # wherever you saved the files
 old <- sf::read_sf(dsn = myfilepath, layer = "geomasked_points_old")
 new <- sf::read_sf(dsn = myfilepath, layer = "geomasked_points_new")
 buffer <- sf::read_sf(dsn = myfilepath, layer = "geomasked_points_buffer")
-
+# draw your map
 plot(sf::st_geometry(buffer[1:5,]), border = "green", col = rgb(0, 1, 0, .05))
 plot(sf::st_geometry(old[1:5,]), add = TRUE, pch = 20, col = "blue")
 plot(sf::st_geometry(new[1:5,]), add = TRUE, pch = 20, col = "red")
@@ -274,9 +280,9 @@ plot(sf::st_geometry(new[1:5,]), add = TRUE, pch = 20, col = "red")
 
 ## Step 11. Save KML file
 
-In this step, nothing happens if you are following the vignette and selected "No" when asked if you wanted to save a KML file. If you had selected "Yes", a KML file and a KMZ (zipped KML) file would be created in this step that could then be opened in Google Earth. 
+In this step, nothing happens if you are following the vignette and selected "No" when asked if you wanted to save a KML file. If you had selected "Yes", a KML file and a KMZ (zipped KML) file would have been created in this step that could then be opened in Google Earth. 
 
-Files saved to the save folder, if "Yes" was selected in Step 9:
+Files saved to the save folder if "Yes" was selected in Step 9:
 
 - geomasked_points.kml 
 - geomasked_points.kmz 

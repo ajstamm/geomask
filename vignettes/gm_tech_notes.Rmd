@@ -21,19 +21,18 @@ knitr::opts_chunk$set(collapse = TRUE, warning = FALSE, message = FALSE,
 
 # Geomasker Overview
 
-This package is maintained by the New York State Department of Health (NYSDOH) Environmental Public Health Tracking (EPHT) program. The purpose of this package is to run the geomasker in R. 
+This package is maintained by the New York State Department of Health (NYSDOH) Environmental Public Health Tracking (EPHT) program. The purpose of this package is to run the geomasker in R. The purpose of the geomasker is to move points randomly within a circular region around each point. This could be used to preserve confidentiality in publicly released point maps.
 
-The purpose of the geomasker is to move points randomly within a circular region around each point. This could be used to preserve confidentiality in publicly released point maps.
 
 The input object is a shapefile (*.shp). For shapefile requirements, see [Preparing your shapefile for geomasking](prepare_shapefile.html). At minimum, the geomasker requires a point shapefile with an identifying variable and a polygon shapefile for area boundaries. 
 
 <!-- any minimum? or any shapefile? allow no boundaries (so person can be put in a lake or another state)? -->
 
-A series of dialog boxes allows the user to select a variable to uniquely identify areas, a boundary file, and minimum and maximum distances. The geomasker requires a boundary shapefile to restrict the movement of points so that all of the new points remain within the same boundaries as the old points. This ensures, for example, that points are not moved into water bodies or that they remain within the same political boundaries.
+A series of dialog boxes allows the user to select a variable to uniquely identify areas, a boundary file, and minimum and maximum distances. The geomasker requires a boundary shapefile to restrict the movement of points so that all of the new points remain within the same boundaries as the old points. This ensures, for example, that points are not moved into water bodies and that they remain within the same political boundaries.
 
 The output includes: a revised version of the original shapefile with masked point coordinates, a new shapefile that maps to the revised coordinates, a shapefile of the buffers used to select points, a PDF with a map comparing points, a comprehensive log, and if requested a KML file. The shapefile can be read in ArcGIS, MapInfo, and QGIS. The KML file can be displayed in Google Earth and other Internet-based mapping programs.
 
-The package does not include any embedded shapefiles. It uses the tigris package for all examples. 
+The package does not include any embedded shapefiles. It uses map layers in the `tigris` package for all examples. 
 
 
 

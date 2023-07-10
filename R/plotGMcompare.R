@@ -9,13 +9,16 @@
 #' If plotting directly, the display may be distorted. For best results, save
 #' to a recordPlot object and write to PDF.
 #'
+#' @inheritParams confirmGMsettings
+# @param maskvars  List of settings for geomasking, including unit type and
+#                  minimum, and maximum values.
 #' @param bound     Boundary layer.
 #' @param original  Original points or areas spatial layer.
 #' @param shifted   Shifted points or areas spatial layer.
-#' @param maskvars  List of settings for geomasking, including unit type and
-#'                  minimum, and maximum values.
 #' @param closemap  Boolean denoting whether to close the map window after
 #'                  the map is drawn and saved.
+#'
+#' @returns Recorded plot object.
 #'
 #' @examples
 #'

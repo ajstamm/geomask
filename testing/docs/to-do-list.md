@@ -1,22 +1,20 @@
 * issues to address
-
-  * add way to bypass dialog entirely?
-  * make boundary file optional
-      * will need to revise buffering step, too
   * fix error when clicking "cancel" for boundary file
   * remove duplicate process files from the log
   * test shapefile preparation document
-  * add change log
-  * add citation and acknowledgements document
 
 * features to add
-
+  * way to bypass dialog entirely?
+  * add option to calculate distance using dedicated min/max variables?
   * revise log to remove need to input area
       * requires adding projection and list of original location layer's variables to "mysettings" list
-
+  * make boundary file optional
+      * will need to revise buffering step, too
 
 * done?
 
+- [ ] add change log
+- [ ] add citation and acknowledgements document
 - [ ] create troubleshooting vignette with known warnings
 - [ ] finish tech notes
 - [ ] add check for OS type to bypass Windows requirement in locate and save steps
@@ -25,7 +23,6 @@
 - [x] check that distances can contain commas and print them with commas
 
 * food for thought
-
   * https://ij-healthgeographics.biomedcentral.com/articles/10.1186/s12942-020-00219-z - street masking?
       * read in OSM to force points near roads?
       * maybe with set road distance (5m?)
