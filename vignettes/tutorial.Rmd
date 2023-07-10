@@ -27,7 +27,7 @@ This vignette is designed for a user with no experience in R who just wants to r
 
 # Objective
 
-This tutorial will walk you through the following activities. You will start with a shapefile of landmark points in Onondaga County in two New York State. You will enter settings to shift these points within their Census tracts.
+This tutorial will walk you through the following activities. You will start with a shapefile of landmark points in Onondaga County, NY. You will enter settings to shift these points within their Census tracts.
 
 The results will be displayed in the log and as a map in a PDF. The new points will be saved as an ESRI shapefile and, if desired, as a Google Earth KML file so that you can import them to your preferred GIS application.
 

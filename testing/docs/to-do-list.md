@@ -13,11 +13,11 @@
 
 * done?
 
-- [ ] add change log
-- [ ] add citation and acknowledgements document
-- [ ] create troubleshooting vignette with known warnings
-- [ ] finish tech notes
 - [ ] add check for OS type to bypass Windows requirement in locate and save steps
+- [x] add change log
+- [x] add citation and acknowledgements document
+- [x] create troubleshooting vignette with known warnings
+- [x] finish tech notes
 - [x] check that all shapefiles are correctly named and labeled in the log (not reading save name correctly)
 - [x] add check that colors are valid, else use default (and add to GAT, too - not added to GAT yet)
 - [x] check that distances can contain commas and print them with commas

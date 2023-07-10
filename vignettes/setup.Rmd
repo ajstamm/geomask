@@ -1,10 +1,10 @@
 ---
-title: "GAT Setup Instructions"
+title: "Installing the geomasker"
 author: "Abigail Stamm"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{GAT Setup Instructions}
+  %\VignetteIndexEntry{Installing the geomasker}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

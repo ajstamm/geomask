@@ -24,7 +24,7 @@
 #'
 #' maskvars <- list(min = 100, max = 1000, unit = "meters",
 #'                  point_id = "POINTID", bound_id = "GEOID10")
-#' ot <- tigris::tracts("NY", "Onondaga", year = 2010)
+#' ot <- tigris::tracts("NY", "Oswego", year = 2010)
 #' ol <- tigris::landmarks("NY", "point", year = 2015)
 #' t <- unlist(sf::st_contains(ot, ol))
 #' ol <- ol[sample(t, size = 20), ]

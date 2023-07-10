@@ -29,7 +29,6 @@ All changes from January 2020 onward by Abigail Stamm.
 * Converted all instances of svdialogs to tcltk.
 * Called functions in the Geographic Aggregation Tool (`gatpkg`) where possible 
   to streamline updates and reduce redundancy.
-* Rewrote quit code to request quit confirmation.
 * Standardized Geomasker-created variable names.
 * Added dialogs to handle incorrectly entered data on the fly.
 * Required points to be selected from inside boundaries.

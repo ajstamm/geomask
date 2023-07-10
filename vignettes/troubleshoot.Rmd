@@ -1,5 +1,5 @@
 ---
-title: "Geomasker Troubleshooting"
+title: "Troubleshooting"
 author: "Abigail Stamm, with some warnings modified from Tom Talbot & Gwen Babcock"
 date: "`r Sys.Date()`"
 output: 
@@ -7,7 +7,7 @@ output:
     toc: true
     toc_depth: 2
 vignette: >
-  %\VignetteIndexEntry{Geomasker Troubleshooting}
+  %\VignetteIndexEntry{Troubleshooting}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

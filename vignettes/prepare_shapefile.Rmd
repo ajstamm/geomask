@@ -1,10 +1,10 @@
 ---
-title: "Geomasker Shapefile Preparation"
+title: "Preparing the shapefile"
 author: "Abigail Stamm"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Shapefile Preparation}
+  %\VignetteIndexEntry{Preparing the shapefile}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -1,10 +1,10 @@
 ---
-title: "Citation Information"
+title: "Citation and acknowledgements"
 author: "Abigail Stamm"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Citation Information}
+  %\VignetteIndexEntry{Citation and acknowledgements}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
