@@ -1,4 +1,4 @@
-#' Select geoMasking distances
+#' Select minimum and maximum distances to shift point locations
 #'
 #' @description
 #'
@@ -12,14 +12,17 @@
 #' @param step       Step in the program.
 #' @param backopt    Boolean denoting whether to include the back button.
 #' @param quitopt    Text string for the cancel button.
-#' @param bgcol      Text string containing UI background color.
-#' @param buttoncol  Text string containing UI button color.
+#' @inheritParams runGMprogram
+# @param bgcol      Text string containing UI background color.
+# @param buttoncol  Text string containing UI button color.
 #'
 #' @examples
 #'
 #' if (interactive()) {
 #' selectGMdistances()
 #' }
+#'
+#' @returns Dialog window to enter distances and measurement unit.
 #'
 #' @export
 #'
@@ -29,6 +32,7 @@ selectGMdistances <- function(step = 3, min = "1,000", max = "10,000",
                               unit = "meters", backopt = TRUE,
                               bgcol = "lightskyblue3", quitopt = "Quit",
                               buttoncol = "cornflowerblue") {
+  # NULL won't trigger an error, even though it is not valid
   coltest <- !"try-error" %in%
     class(try(grDevices::col2rgb(bgcol), silent = TRUE))
   if (!coltest) bgcol = "thistle1"

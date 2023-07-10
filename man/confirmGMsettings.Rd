@@ -2,7 +2,7 @@
 % Please edit documentation in R/confirmGMsettings.R
 \name{confirmGMsettings}
 \alias{confirmGMsettings}
-\title{Confirm geomasking settings}
+\title{Confirm user-selected geomasking settings}
 \usage{
 confirmGMsettings(
   maskvars,
@@ -31,6 +31,9 @@ shapefiles to read in and save to, without extensions.}
 \item{quitopt}{Text string for the cancel button.}
 
 \item{buttoncol}{Text string containing UI button color.}
+}
+\value{
+Dialog window with options to confirm or modify program settings.
 }
 \description{
 This function opens a dialog window for the user to select whether the

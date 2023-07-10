@@ -2,7 +2,7 @@
 % Please edit documentation in R/runGMprogram.R
 \name{runGMprogram}
 \alias{runGMprogram}
-\title{Run the geomasker}
+\title{Run the full geomasking tool}
 \usage{
 runGMprogram(bgcol = "thistle1", buttoncol = "plum2", settings = NULL)
 }
@@ -13,6 +13,13 @@ runGMprogram(bgcol = "thistle1", buttoncol = "plum2", settings = NULL)
 
 \item{settings}{The filepath to an Rdata file previously created by the
 Geomasker.}
+}
+\value{
+Series of dialog windows and several files.
+\itemize{
+\item Dialogs: Request shapefiles, distance settings, KML, and save file
+\item Files:   Shapefiles, PDF, log, and optional KML file
+}
 }
 \description{
 This function runs the full geomasking tool.

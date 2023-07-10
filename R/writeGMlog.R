@@ -4,22 +4,22 @@
 #' input and output datasets, variables and settings used, map projection,
 #' and program start and end times.
 #'
-#' @inheritParams confirmGMsettings
-# @param filevars     List of file names and paths. Of relevance to this
-#                     function are the filename, filein, and the combined save
-#                     path and save name, userout.
-#'                     starttime, and the booleans kml and exists.
-# @param maskvars     List of settings for calculating masked locations.
 #' @param area         Spatial layer.
 #' @param mysettings   List of system settings, including version, pkgdate,
+#'                     starttime, and the booleans kml and exists.
 #' @param settingsfile R data file (*.Rdata) produced as part of the
 #'                     geomasker's output. This file saves all settings for
 #'                     the geomasker. Other options can be set to NULL only if
 #'                     this option is defined.
+#' @inheritParams confirmGMsettings
+# @param filevars     List of file names and paths. Of relevance to this
+#                     function are the filename, filein, and the combined save
+#                     path and save name, userout.
+# @param maskvars     List of settings for calculating masked locations.
 #'
 #' @details
 #'
-#' Notes on using the settingsfile option:
+#' Notes on using the "settingsfile" option:
 #'
 #' 1. You will get an error if you moved the input shapefile before running
 #'    the function with this option, since the function needs to access the

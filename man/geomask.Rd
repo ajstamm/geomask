@@ -2,7 +2,7 @@
 % Please edit documentation in R/geomask.R
 \name{geomask}
 \alias{geomask}
-\title{The NYS Geomasking Tool (geomasker)}
+\title{The New York State Geomasking Tool (geomasker)}
 \description{
 A method for shifting point-level data to mask locations using user-defined
 parameters with minimal knowledge of or experience using R.

@@ -1,4 +1,4 @@
-#' Calculate geomasked points
+#' Mask original point locations
 #'
 #' @inheritParams confirmGMsettings
 # @param maskvars  List of settings for calculating masked locations.
@@ -6,13 +6,13 @@
 #'
 #' @description
 #'
-#'
 #' This function reads in the location layer, calculates a valid buffer around
 #' each point, and samples a random point from within the buffer. Two new
 #' layers are added to the layer list in myshps: (1) a layer of masked points
 #' and (2) a layer of corresponding buffers for assessment.
 #'
 #' @details
+#'
 #' If any buffers contain no valid points, those points are processed again
 #' with the maximum distance revised to equal the minimum distance and the
 #' minimum distance divided by 2. This process is repeated as many times as
@@ -20,18 +20,18 @@
 #' in the flag variable in both layers produced. (A flag of 0 means the first
 #' buffer contained valid points to sample.)
 #'
-#' @returns `myshps` list object containing two new map layers, one with buffer
-#'          areas and one with masked points.
+#' @returns List containing two new map layers, one with buffer areas and
+#'          one with masked points.
 #'
 #' @examples
 #'
 #' maskvars <- list(min = 100, max = 1000, unit = "meters",
 #'                  point_id = "POINTID", bound_id = "GEOID10")
 #'
-#' ot <- tigris::tracts("NY", "Onondaga", year = 2010)
+#' ot <- tigris::tracts("NY", "Oswego", year = 2010)
 #' ol <- tigris::landmarks("NY", "point", year = 2015)
-#' t <- sf::st_contains(ot, ol) |> unlist()
-#' ol <- ol[t, ]
+#' t <- unlist(sf::st_contains(ot, ol))
+#' ol <- ol[sample(t, size = 20), ]
 #' myshps <- list(point = ol, bound = ot)
 #'
 #' myshps <- calculateGMpoints(myshps = myshps, maskvars = maskvars)

@@ -1,4 +1,4 @@
-#' Plot the geomasker comparison map
+#' Draw the map comparing original and masked point locations
 #'
 #' @description
 #' This function draws two maps on top of each other, so that point locations
@@ -26,8 +26,8 @@
 #'                  point_id = "POINTID", bound_id = "GEOID10")
 #' ot <- tigris::tracts("NY", "Onondaga", year = 2010)
 #' ol <- tigris::landmarks("NY", "point", year = 2015)
-#' t <- sf::st_contains(ot, ol) |> unlist()
-#' ol <- ol[t, ]
+#' t <- unlist(sf::st_contains(ot, ol))
+#' ol <- ol[sample(t, size = 20), ]
 #' myshps <- list(point = ol, bound = ot)
 #' myshps <- calculateGMpoints(myshps = myshps, maskvars = maskvars)
 #'

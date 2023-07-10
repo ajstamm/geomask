@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotGMcompare.R
 \name{plotGMcompare}
 \alias{plotGMcompare}
-\title{Plot the geomasker comparison map}
+\title{Draw the map comparing original and masked point locations}
 \usage{
 plotGMcompare(
   bound,
@@ -19,11 +19,15 @@ plotGMcompare(
 
 \item{shifted}{Shifted points or areas spatial layer.}
 
-\item{maskvars}{List of settings for geomasking, including unit type and
-minimum, and maximum values.}
+\item{maskvars}{List of objects needed to calculate masked points. It
+contains the numbers min and max, the boolean projection,
+and the strings unit, point_id, and bound_id.}
 
 \item{closemap}{Boolean denoting whether to close the map window after
 the map is drawn and saved.}
+}
+\value{
+Recorded plot object.
 }
 \description{
 This function draws two maps on top of each other, so that point locations
@@ -40,8 +44,8 @@ maskvars <- list(min = 100, max = 1000, unit = "meters",
                  point_id = "POINTID", bound_id = "GEOID10")
 ot <- tigris::tracts("NY", "Onondaga", year = 2010)
 ol <- tigris::landmarks("NY", "point", year = 2015)
-t <- sf::st_contains(ot, ol) |> unlist()
-ol <- ol[t, ]
+t <- unlist(sf::st_contains(ot, ol))
+ol <- ol[sample(t, size = 20), ]
 myshps <- list(point = ol, bound = ot)
 myshps <- calculateGMpoints(myshps = myshps, maskvars = maskvars)
 

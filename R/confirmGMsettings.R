@@ -1,4 +1,4 @@
-#' Confirm geomasking settings
+#' Confirm user-selected geomasking settings
 #'
 #' @description
 #' This function opens a dialog window for the user to select whether the

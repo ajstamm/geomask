@@ -1,10 +1,9 @@
-#' Run the geomasker
+#' Run the full geomasking tool
 #'
-#' @inheritParams gatpkg::runGATprogram
-# @param settings   The filepath to an Rdata file previously created by the
-#                   Geomasker.
-# @param bgcol      Text string containing UI background color.
-# @param buttoncol  Text string containing UI button color.
+#' @param settings   The filepath to an Rdata file previously created by the
+#'                   Geomasker.
+#' @param bgcol      Text string containing UI background color.
+#' @param buttoncol  Text string containing UI button color.
 #'
 #' @description
 #' This function runs the full geomasking tool.

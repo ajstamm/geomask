@@ -2,14 +2,20 @@
 % Please edit documentation in R/calculateGMpoints.R
 \name{calculateGMpoints}
 \alias{calculateGMpoints}
-\title{Calculate geomasked points}
+\title{Mask original point locations}
 \usage{
 calculateGMpoints(myshps, maskvars)
 }
 \arguments{
 \item{myshps}{List of shapefiles}
 
-\item{maskvars}{List of settings for calculating masked locations.}
+\item{maskvars}{List of objects needed to calculate masked points. It
+contains the numbers min and max, the boolean projection,
+and the strings unit, point_id, and bound_id.}
+}
+\value{
+List containing two new map layers, one with buffer areas and
+one with masked points.
 }
 \description{
 This function reads in the location layer, calculates a valid buffer around
@@ -30,10 +36,10 @@ buffer contained valid points to sample.)
 maskvars <- list(min = 100, max = 1000, unit = "meters",
                  point_id = "POINTID", bound_id = "GEOID10")
 
-ot <- tigris::tracts("NY", "Onondaga", year = 2010)
+ot <- tigris::tracts("NY", "Oswego", year = 2010)
 ol <- tigris::landmarks("NY", "point", year = 2015)
-t <- sf::st_contains(ot, ol) |> unlist()
-ol <- ol[t, ]
+t <- unlist(sf::st_contains(ot, ol))
+ol <- ol[sample(t, size = 20), ]
 myshps <- list(point = ol, bound = ot)
 
 myshps <- calculateGMpoints(myshps = myshps, maskvars = maskvars)

@@ -15,11 +15,12 @@ writeGMlog(
 \arguments{
 \item{area}{Spatial layer.}
 
-\item{maskvars}{List of settings for calculating masked locations.}
+\item{maskvars}{List of objects needed to calculate masked points. It
+contains the numbers min and max, the boolean projection,
+and the strings unit, point_id, and bound_id.}
 
-\item{filevars}{List of file names and paths. Of relevance to this
-function are the filename, filein, and the combined save
-path and save name, userout.}
+\item{filevars}{List of strings, including the names and paths of
+shapefiles to read in and save to, without extensions.}
 
 \item{mysettings}{List of system settings, including version, pkgdate,
 starttime, and the booleans kml and exists.}
@@ -29,13 +30,16 @@ geomasker's output. This file saves all settings for
 the geomasker. Other options can be set to NULL only if
 this option is defined.}
 }
+\value{
+Text file containing all settings used to run the program.
+}
 \description{
 This function writes a log of the geomasking process. It reports the
 input and output datasets, variables and settings used, map projection,
 and program start and end times.
 }
 \details{
-Notes on using the settingsfile option:
+Notes on using the "settingsfile" option:
 \enumerate{
 \item You will get an error if you moved the input shapefile before running
 the function with this option, since the function needs to access the

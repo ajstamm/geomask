@@ -2,7 +2,7 @@
 % Please edit documentation in R/selectGMdistances.R
 \name{selectGMdistances}
 \alias{selectGMdistances}
-\title{Select geoMasking distances}
+\title{Select minimum and maximum distances to shift point locations}
 \usage{
 selectGMdistances(
   step = 3,
@@ -31,6 +31,9 @@ selectGMdistances(
 \item{quitopt}{Text string for the cancel button.}
 
 \item{buttoncol}{Text string containing UI button color.}
+}
+\value{
+Dialog window to enter distances and measurement unit.
 }
 \description{
 This function is modified from a similar function in gatpkg. It creates
