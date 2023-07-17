@@ -26,8 +26,9 @@ The Geomasker requires two Esri shapefiles. If your files are in another format,
 
 The minimum requirements for your shapefile to mask include:
 
-1. **Point geometry**: The layer shapes must be polygons, for example state outlines.
+1. **Point geometry**: The layer shapes must be points.
 2. **Identifier variable**: A character or string variable with unique values for each row.
+3. The file must be in a latitude/longitude coordinate reference system.
 
 
 

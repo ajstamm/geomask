@@ -7,11 +7,11 @@ stable](https://lifecycle.r-lib.org/articles/figures/lifecycle-stable.svg)](http
 
 # Geomasking Tool 
 
-The geomasking tool was developed by the New York State Department of Health (NYSDOH) Environmental Public Health Tracking (EPHT) Program with funding administered through Health Research Incorporated. The geomasker is maintained by Abigail Stamm at the NYSDOH. 
+The geomasking tool (geomasker) was developed by the New York State Department of Health (NYSDOH) Environmental Public Health Tracking (EPHT) Program with funding administered through Health Research Incorporated. The geomasker is maintained by Abigail Stamm at the NYSDOH. 
 
 ### Installing the geomasker
 
-Run the code below in R to install GAT directly from GitHub.
+Run the code below in R to install the geomasker directly from GitHub.
 
 ``` r
 # install devtools if you don't already have it
@@ -22,10 +22,6 @@ devtools::install_github("ajstamm/geomask", dependencies = TRUE,
                          build_vignette = TRUE)
 ```
 
-### Why create the geomasker
-
-
-### How the geomasker works
 
 
 

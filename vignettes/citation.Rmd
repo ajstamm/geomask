@@ -32,11 +32,11 @@ The conversion of the Geomasker to an R package would not have been possible wit
 
 **Major contributors**  
 Abigail Stamm, NYSDOH BEOE  
-Gwen (Babcock) LaSelva, NYSDOH BEOE  
+Gwen Babcock, NYSDOH BEOE  
 
-**Alpha testers**  
+<!-- **Alpha testers**   -->
 
-**Beta testers**  
+<!-- **Beta testers**   -->
 
 The Geomasker was made possible through funding made available to the New York State Department of Health / Health Research, Incorporated by the CDC through grant # NUE1EH001341-03-01. Its content is solely the responsibility of the authors and does not necessarily represent the official views of the CDC.
 

@@ -36,9 +36,9 @@ These errors and warnings are related to the user input portion of the Geomasker
 
 The dialog boxes may be hidden beneath other windows. Close or minimize extraneous windows or check the task bar for an icon that looks like a thin quill/feather.
 
-# Running the Geomasker
+<!-- # Running the Geomasker -->
 
-These errors and warnings may occur while the Geomasker is processing your shapefile.
+<!-- These errors and warnings may occur while the Geomasker is processing your shapefile. -->
 
 # Output files
 

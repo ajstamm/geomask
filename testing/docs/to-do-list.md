@@ -12,15 +12,14 @@
       * will need to revise buffering step, too
 
 * done?
-
-- [ ] add check for OS type to bypass Windows requirement in locate and save steps
-- [x] add change log
-- [x] add citation and acknowledgements document
-- [x] create troubleshooting vignette with known warnings
-- [x] finish tech notes
-- [x] check that all shapefiles are correctly named and labeled in the log (not reading save name correctly)
-- [x] add check that colors are valid, else use default (and add to GAT, too - not added to GAT yet)
-- [x] check that distances can contain commas and print them with commas
+  - [ ] add check for OS type to bypass Windows requirement in locate and save steps
+  - [x] add change log
+  - [x] add citation and acknowledgements document
+  - [x] create troubleshooting vignette with known warnings
+  - [x] finish tech notes
+  - [x] check that all shapefiles are correctly named and labeled in the log (not reading save name correctly)
+  - [x] add check that colors are valid, else use default (and add to GAT, too - not added to GAT yet)
+  - [x] check that distances can contain commas and print them with commas
 
 * food for thought
   * https://ij-healthgeographics.biomedcentral.com/articles/10.1186/s12942-020-00219-z - street masking?
