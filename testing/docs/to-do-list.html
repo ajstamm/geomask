@@ -352,14 +352,86 @@ display: none;
 </div>
 
 
+<div id="issues-to-address" class="section level2">
+<h2>Issues to address</h2>
 <ul>
-<li>issues to address
-<ul>
-<li>fix error when clicking “cancel” for boundary file</li>
+<li>fix error when clicking “cancel” in boundary file dialog</li>
 <li>remove duplicate process files from the log</li>
 <li>test shapefile preparation document</li>
-</ul></li>
-<li>features to add
+</ul>
+</div>
+<div id="gwens-feedback---mix-of-bugs-feature-requests" class="section level1">
+<h1>Gwen’s feedback - mix of bugs &amp; feature requests</h1>
+<ul>
+<li>Got errors with writeGMLog using the settingsfile option, not sure
+if this is a bug or if I’m misunderstanding the usage.
+<code>&gt; writeGMlog(settingsfile=&quot;C:/Users/gdb02/OneDrive - New York State Office of Information Technology Services/Documents/Maps/geomaked_points_settings.Rdata&quot;)</code>
+<code>Error in st_read.default(dsn = filevars$pathin, layer = filevars$filein) : no st_read method available for objects of class NULL</code>
+<code>&gt; writeGMlog(settingsfile=&quot;C:/Users/gdb02/OneDrive - New York State Office of Information Technology Services/Documents/Maps/geomaked_points_settings.Rdata&quot;,area=NULL, mysettings=NULL)</code>
+<code>Error in st_read.default(dsn = filevars$pathin, layer = filevars$filein) : no st_read method available for objects of class NULL</code></li>
+<li><code>Error in if (length(userfile) &gt; 0 &amp; !userfile == &quot;cancel&quot;) { : argument is of length zero</code>
+Got that error with this code:
+<code>runGMprogram(bgcol=&#39;white&#39;,buttoncol=&#39;red&#39;)</code> and canceling
+from the open boundary file dialog.</li>
+<li>For confirmGMsettings {geomask} function, it seems like the quitopt
+option does not work properly. I tried:
+<code>confirmGMsettings(maskvars = maskvars, filevars = filevars,step=7,bgcol=&quot;yellow&quot;,quitopt=&quot;bye-bye&quot;,buttoncol=&quot;Red&quot;)</code></li>
+<li>Wish list for future versions; show shifted points as vectors. Could
+be a separate map, or just replace the existing output.</li>
+<li>In the technical notes, I found this sentence confusing: <em>The
+output includes: a revised version of the original shapefile with masked
+point coordinates, a new shapefile that maps to the revised coordinates,
+a shapefile of the buffers used to select points, a PDF with a map
+comparing points, a comprehensive log, and if requested a KML
+file.</em><br />
+Suggested Revision: <em>The output includes: a copy of the original
+shapefile with masked point coordinate values added, a shapefile with
+points located at the masked coordinate values, a shapefile of the
+buffers used to select points, a PDF with a map comparing points, a
+comprehensive log, and, if requested, a KML file.</em></li>
+<li>Also, you refer to ‘valid areas’ (for the buffers) without really
+defining it. Does valid area=area greater than zero? Maybe add an
+explanation.<br />
+Valid area = Area where buffer overlaps boundary.</li>
+<li>I also don’t understand this text in the tutorial: <em>Note: R
+package documentation allows you to view images, but not link to them.
+For the map, view a larger image by right clicking on the map and
+selecting “Open image in new tab.” </em><br />
+Also, you mentioned “right clicking”. Since mouse buttons are
+customizable to accommodate left-handed people, it’s better practice to
+say “click the primary mouse button” or “click the secondary mouse
+button”.</li>
+<li>Why is the background of the distance boxes gray? By convention,
+this often means inactive/disabled, which doesn’t seem to be the case
+here. Also it’s not gray in the documentation. - Bug to check.</li>
+<li>Modify the tutorial code to remove the ALAND10 field from the data
+to not trigger large-number warnings.</li>
+<li>In tutorial: The “flag” variable in the old and new buffers refers
+to the number of times boundaries had to be recalculated to create a
+valid area to select a masking point. Flag only appears to be in the old
+and buffer files, not the new file. - Check that the correct layers
+saved to the correct files.</li>
+<li>I found what is possibly a larger problem with the geomasker tool:
+The buffer file is points, not areas. The buffers should be areas. Here
+is the buffer file from the tutorial:</li>
+<li>Geomasker citation: Also, please remove ‘LaSelva’ and just use
+Babcock (my Pen name). Also, it needs a URL and date field.</li>
+<li>Started looking at the documentation. The readme appears to be
+missing two sections: “Why Create the Geomasker” and “How the geomasker
+works”; they are titles with no text. The e-mail link could be neatened
+up/fixed (it doesn’t fill in the subject as intended). The archive
+doesn’t actually have much by way of history documentation (or the
+original script); I suggest adding the version found here:
+“P:_GeoTools_2017Feb9.zip” or here: “P:_distribution2017Feb9“. Also, you
+need a statement briefly describing what the geomasking tool is near the
+start, something like: “The purpose of this tool is to move points
+randomly within a circular region around each point to preserve privacy
+in when displaying point maps.” (this is from the 1.3 documentation; you
+could pull other text from that to add to the readme as needed, see
+“P:_distribution2017Feb9 user guide.pdf”).</li>
+</ul>
+<div id="features-to-add" class="section level2">
+<h2>Features to add</h2>
 <ul>
 <li>way to bypass dialog entirely?</li>
 <li>add option to calculate distance using dedicated min/max
@@ -373,37 +445,39 @@ variables to “mysettings” list</li>
 <ul>
 <li>will need to revise buffering step, too</li>
 </ul></li>
-</ul></li>
-<li>done?
+</ul>
+</div>
+</div>
+<div id="done" class="section level1">
+<h1>Done?</h1>
 <ul class="task-list">
-<li><input type="checkbox" disabled></input>add check for OS type to bypass
-Windows requirement in locate and save steps</li>
-<li><input type="checkbox" disabled checked></input>add change log</li>
-<li><input type="checkbox" disabled checked></input>add citation and
+<li><input type="checkbox"></input>add check for OS type to bypass Windows
+requirement in locate and save steps</li>
+<li><input type="checkbox" checked></input>add change log</li>
+<li><input type="checkbox" checked></input>add citation and
 acknowledgements document</li>
-<li><input type="checkbox" disabled checked></input>create
-troubleshooting vignette with known warnings</li>
-<li><input type="checkbox" disabled checked></input>finish tech
-notes</li>
-<li><input type="checkbox" disabled checked></input>check that all
-shapefiles are correctly named and labeled in the log (not reading save
-name correctly)</li>
-<li><input type="checkbox" disabled checked></input>add check that
-colors are valid, else use default (and add to GAT, too - not added to
-GAT yet)</li>
-<li><input type="checkbox" disabled checked></input>check that distances
-can contain commas and print them with commas</li>
-</ul></li>
-<li>food for thought
+<li><input type="checkbox" checked></input>create troubleshooting vignette
+with known warnings</li>
+<li><input type="checkbox" checked></input>finish tech notes</li>
+<li><input type="checkbox" checked></input>check that all shapefiles are
+correctly named and labeled in the log (not reading save name
+correctly)</li>
+<li><input type="checkbox" checked></input>add check that colors are valid,
+else use default (and add to GAT, too - not added to GAT yet)</li>
+<li><input type="checkbox" checked></input>check that distances can contain
+commas and print them with commas</li>
+</ul>
+</div>
+<div id="food-for-thought" class="section level1">
+<h1>Food for thought</h1>
+<p><a href="https://ij-healthgeographics.biomedcentral.com/articles/10.1186/s12942-020-00219-z" class="uri">https://ij-healthgeographics.biomedcentral.com/articles/10.1186/s12942-020-00219-z</a>
+- street masking?</p>
 <ul>
-<li><a href="https://ij-healthgeographics.biomedcentral.com/articles/10.1186/s12942-020-00219-z" class="uri">https://ij-healthgeographics.biomedcentral.com/articles/10.1186/s12942-020-00219-z</a>
-- street masking?
-<ul>
-<li>read in OSM to force points near roads?</li>
-<li>maybe with set road distance (5m?)</li>
-</ul></li>
-<li>load layers in advance, rather than requiring shapefiles?</li>
-<li>handle shifting polygons?
+<li><p>read in OSM to force points near roads?</p></li>
+<li><p>maybe with set road distance (5m?)</p></li>
+<li><p>load layers in advance, rather than requiring
+shapefiles?</p></li>
+<li><p>handle shifting polygons?</p>
 <ul>
 <li>calculate and shift centroid, then add difference to indices</li>
 <li>would guarantee only centroid is within buffer, not full area</li>
@@ -411,8 +485,8 @@ can contain commas and print them with commas</li>
 unnecessarily complicated</li>
 <li>shifting lines, too? should work like polygons</li>
 </ul></li>
-</ul></li>
 </ul>
+</div>
 
 
 

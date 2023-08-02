@@ -36,7 +36,7 @@ The results will be displayed in the log and as a map in a PDF. The new points w
 
 Please note that R is case sensitive. The provided code is designed to be copy-pasted, but if you prefer to type it yourself, be aware of capitalization.
 
-To follow this vignette, you will need appropriate shapefiles. For that purpose, the first step is to create the shapefiles using the R package tigris. The tigris package is not required to run the geomasker, so you may need to install it first.
+To follow this vignette, you will need appropriate shapefiles. For that purpose, the first step is to create the shapefiles using the R package `tigris`. The `tigris` package is not required to run the geomasker, so you may need to install it first.
 
 ```{r installtigris, eval = FALSE, echo = TRUE}
 # install tigris if necessary
@@ -47,15 +47,19 @@ The code below will save two shapefiles to your working directory. To find your 
 
 ```{r createshapefiles, eval = FALSE, echo = TRUE, warning = FALSE, message = FALSE}
 # create and save the shapefiles
-ot <- tigris::tracts("NY", "Onondaga", year = 2010)
-ol <- tigris::landmarks("NY", "point", year = 2015)
-t <- sf::st_contains(ot, ol) |> unlist()
-ol <- ol[t, ]
+onon_tracts <- tigris::tracts("NY", "Onondaga", year = 2010) |>
+  dplyr::select(GEOID10)
+ny_points <- tigris::landmarks("NY", "point", year = 2015) |> 
+  dplyr::select(ANSICODE, POINTID, FULLNAME, MTFCC)
+points_in_tracts <- sf::st_contains(onon_tracts, ny_points) |> unlist()
+onon_points <- ny_points[points_in_tracts, ]
 
-sf::write_sf(ot, dsn = "maps", layer = "onondaga_tracts", driver = "ESRI shapefile")
-sf::write_sf(ol, dsn = "maps", layer = "onondaga_points", driver = "ESRI shapefile")
+sf::write_sf(onon_tracts, dsn = "maps", layer = "onondaga_tracts", 
+             driver = "ESRI shapefile")
+sf::write_sf(onon_points, dsn = "maps", layer = "onondaga_points", 
+             driver = "ESRI shapefile")
 
-rm(ol, ot, t)
+rm(onon_points, ny_points, onon_tracts, points_in_tracts)
 ```
 
 
@@ -107,7 +111,7 @@ knitr::include_graphics("images/locid.png")
 To follow the steps as shown, select "POINTID". Click "Next >" to move to the next step, "< Back" to move to the previous step, "Quit geomasker" to end the program, or "Help" to get further guidance.
 
 
-## Step 2. Request boundary variable
+## Step 2. Request boundary shapefile
 
 This step requests the boundary shapefile and identifier variable from the user using pop-up dialogs. In the first dialog, you can navigate to any shapefile on your computer or network. To follow the steps as shown, navigate to the "maps" folder you just created. Select the "onondaga_tracts" shapefile. 
 
@@ -222,7 +226,7 @@ In this section, the map is saved to a PDF file in the same folder as the aggreg
 
 An Rdata file is also saved. The same save filename is used with "settings" at the end. This file includes all settings in R format, which can be opened in R or run through the geomasker a second time. If you want to use the Rdata file to re-run the geomasker, use this code and change `myfilepath` to the location and name of your Rdata file:
 
-```{r savesettings, eval=FALSE}
+```{r savesettings, eval=FALSE, echo = TRUE}
 myfilepath <- "c:/users/my_id/my_folder/geomasked_points_settings.Rdata"
 geomask::runGMprogram(settings = myfilepath)
 ```
